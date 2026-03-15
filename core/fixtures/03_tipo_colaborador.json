@@ -1,0 +1,23 @@
+[
+    {
+        "model": "core.tipocolaborador",
+        "fields": {
+            "descripcion": "Dueño",
+            "code": "-1"
+        }
+    },
+    {
+        "model": "core.tipocolaborador",
+        "fields": {
+            "descripcion": "Administrador",
+            "code": "0"
+        }
+    },
+    {
+        "model": "core.tipocolaborador",
+        "fields": {
+            "descripcion": "Trabajador",
+            "code": "1"
+        }   
+    }
+]

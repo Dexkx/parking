@@ -1,0 +1,74 @@
+[
+    {
+        "model": "core.status",
+        "fields": {
+            "name": "Activo",
+            "descripcion": "Estado Activo",
+            "value": "Activo"
+        }
+    },
+    {
+        "model": "core.status",
+        "fields": {
+            "name": "Inactivo",
+            "descripcion": "Estado Inactivo",
+            "value": "Inactivo"
+        }
+    },
+    {
+        "model": "core.status",
+        "fields": {
+            "name": "Pendiente",
+            "descripcion": "Estado Pendiente",
+            "value": "Pendiente"
+        }
+    },
+    {
+        "model": "core.status",
+        "fields": {
+            "name": "Aprobado",
+            "descripcion": "Estado Aprobado",
+            "value": "Aprobado"
+        }
+    },
+    {
+        "model": "core.status",
+        "fields": {
+            "name": "Rechazado",
+            "descripcion": "Estado Rechazado",
+            "value": "Rechazado"
+        }
+    },
+    {
+        "model": "core.status",
+        "fields": {
+            "name": "Cancelado",
+            "descripcion": "Estado Cancelado",
+            "value": "Cancelado"
+        }
+    },
+    {
+        "model": "core.status",
+        "fields": {
+            "name": "Ocupado",
+            "descripcion": "Estado Ocupado",
+            "value": "Ocupado"
+        }
+    },
+    {
+        "model": "core.status",
+        "fields": {
+            "name": "Libre",
+            "descripcion": "Estado Libre",
+            "value": "Libre"
+        }
+    },
+    {
+        "model": "core.status",
+        "fields": {
+            "name": "Reservado",
+            "descripcion": "Estado Reservado",
+            "value": "Reservado"
+        }
+    }
+]
