@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Parkeo - Resultados</title>
+<link rel="stylesheet" href="css/parqueadero.css">
+
+</head>
+
+<body>
+
+<header class="header">
+
+<h2>🚗 Parkeo</h2>
+
+<div class="user-info">
+
+<a href="index.html">
+<button>Inicio</button>
+</a>
+
+<span id="welcomeMessage"></span>
+
+<a href="misReservas.html">
+<button>Mis Reservas</button>
+</a>
+
+<span id="contadorReservas"></span>
+
+<button onclick="logout()">Cerrar sesión</button>
+
+</div>
+
+</header>
+
+<div class="container">
+
+<h3>Parqueaderos disponibles</h3>
+
+<div id="parqueaderosContainer" class="grid"></div>
+
+</div>
+
+<script src="js/models.js"></script>
+<script src="js/data.js"></script>
+<script src="js/parqueadero.js"></script>
+
+</body>
+</html>

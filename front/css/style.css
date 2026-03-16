@@ -1,0 +1,117 @@
+/* =====================================================
+ESTILOS GENERALES
+===================================================== */
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    background-color: #f4f6f8;
+}
+
+/* =====================================================
+HEADER
+===================================================== */
+
+header {
+    background-color: #1f2937;
+    color: white;
+    padding: 15px 30px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* =====================================================
+CONTENIDO
+===================================================== */
+
+main {
+    padding: 40px;
+}
+
+/* =====================================================
+FORMULARIO
+===================================================== */
+
+form {
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+label {
+    font-weight: bold;
+}
+
+input,
+select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+/* =====================================================
+BOTONES
+===================================================== */
+
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background-color: #2563eb;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #1d4ed8;
+}
+
+.secondary {
+    background-color: #374151;
+}
+
+.secondary:hover {
+    background-color: #111827;
+}
+
+/* =====================================================
+MODAL LOGIN
+===================================================== */
+
+.modal {
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0,0,0,0.5);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* =====================================================
+UTILIDADES
+===================================================== */
+
+.hidden {
+    display: none;
+}

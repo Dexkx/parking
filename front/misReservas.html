@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Mis Reservas</title>
+<link rel="stylesheet" href="css/parqueadero.css">
+
+</head>
+
+<body>
+
+<header class="header">
+
+<h2>Mis Reservas</h2>
+
+<div class="user-info">
+
+<a href="index.html">
+<button>Inicio</button>
+</a>
+
+<span id="welcomeMessage"></span>
+
+<button onclick="logout()">Cerrar sesión</button>
+
+</div>
+
+</header>
+
+<div class="container">
+
+<h3 id="contadorReservas"></h3>
+
+<div id="reservasContainer" class="grid"></div>
+
+</div>
+
+<script src="js/models.js"></script>
+<script src="js/misReservas.js"></script>
+
+</body>
+</html>

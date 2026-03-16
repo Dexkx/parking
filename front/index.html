@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+<meta charset="UTF-8">
+<title>Parkeo</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<header>
+
+<h1>Parkeo</h1>
+
+<div class="user-area">
+
+<span id="saludoUsuario"></span>
+
+<button id="btnLogin" class="secondary">
+Login
+</button>
+
+</div>
+
+</header>
+
+<main>
+
+<h2>Buscar Parqueaderos</h2>
+
+<form id="formBusqueda">
+
+<label>Ciudad</label>
+<select id="ciudad">
+<option value="Bogota">Bogotá</option>
+<option value="Medellin">Medellín</option>
+</select>
+
+<label>Zona</label>
+<select id="zona">
+<option value="">Cualquiera</option>
+<option value="Norte">Norte</option>
+<option value="Centro">Centro</option>
+<option value="Sur">Sur</option>
+<option value="Occidente">Occidente</option>
+</select>
+
+<label>
+<input type="checkbox" id="activarPrecio">
+Filtrar por precio
+</label>
+
+<div id="precioContainer" class="hidden">
+
+<label>Precio máximo</label>
+<input type="number" id="precioMax">
+
+</div>
+
+<label>
+<input type="checkbox" id="soloDisponibles">
+Solo disponibles
+</label>
+
+<button type="submit">
+Buscar
+</button>
+
+</form>
+
+</main>
+
+
+<div id="modalLogin" class="modal hidden">
+
+<div class="modal-content">
+
+<input type="text" id="username" placeholder="Usuario">
+
+<input type="password" id="password" placeholder="Contraseña">
+
+<button id="loginSubmit">
+Entrar
+</button>
+
+<button id="closeModal">
+Cancelar
+</button>
+
+</div>
+
+</div>
+
+<script src="js/models.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
