@@ -39,13 +39,13 @@ class NegocioSR(StatusSRMixin, serializers.ModelSerializer):
 
 class ColaboradoresNegocioSR(StatusSRMixin, serializers.ModelSerializer):
     negocio = serializers.PrimaryKeyRelatedField(queryset=models.Negocio.objects.all(), write_only=True)
-    
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        
+
         data['usuario'] = UsuarioSR(instance.usuario).data
         data['tipo_colaborador'] = TipoColaboradorSR(instance.tipo_colaborador).data
-        
+
         return data
 
     class Meta:
@@ -55,27 +55,27 @@ class ColaboradoresNegocioSR(StatusSRMixin, serializers.ModelSerializer):
 
 class PuestoNegocioSR(StatusSRMixin, serializers.ModelSerializer):
     negocio = serializers.PrimaryKeyRelatedField(queryset=models.Negocio.objects.all(), write_only=True)
-    
+
     def to_representantion(self, instance):
         data = super().to_representation(instance)
-        
+
         data['tipo_vehiculo'] = TipoVehiculoSR(instance.tipo_vehiculo).data
-        
+
         return data
-    
+
     class Meta:
         model = models.PuestoNegocio
         fields = ('negocio', 'piso', 'numero', 'tipo_vehiculo')
 
-    
+
 class TarifaNegocioSR(StatusSRMixin, serializers.ModelSerializer):
     negocio = serializers.PrimaryKeyRelatedField(queryset=models.Negocio.objects.all(), write_only=True)
-    
+
     piso = serializers.CharField(max_length=20, write_only=True, required=False)
     numero = serializers.IntegerField(required=False, write_only=True)
-    
+
     tipo_vehiculo = serializers.PrimaryKeyRelatedField(queryset=models.TipoVehiculo.objects.all(), write_only=True)
-    
+
     class Meta:
         model = models.TarifasNegocio
         fields = ('negocio', 'piso', 'numero', 'tipo_vehiculo', 'tiempo', 'valor')

@@ -57,3 +57,19 @@ class CiudadSR(serializers.ModelSerializer):
     class Meta:
         model = models.Ciudad
         fields = ("name",)
+
+
+class VehiculoUsuarioSR(serializers.ModelSerializer):
+    """
+    Serializer para los vehículos registrados de un usuario.
+    Se usa en la app para asociar placas a reservas.
+    """
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['tipo_vehiculo'] = TipoVehiculoSR(instance.tipo_vehiculo).data
+        return data
+
+    class Meta:
+        model = models.VehiculosUsuario
+        fields = ("placa", "tipo_vehiculo")
