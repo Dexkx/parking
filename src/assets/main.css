@@ -1,0 +1,132 @@
+/* ── Vue Toastification dark theme ── */
+@import 'vue-toastification/dist/index.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #0f1117; }
+  ::-webkit-scrollbar-thumb { background: #4e5568; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #00e5b0; }
+
+  ::selection { background: rgba(0,229,176,0.15); color: #00e5b0; }
+  *:focus-visible { outline: 2px solid #00e5b0; outline-offset: 3px; }
+
+  /* Leaflet dark override */
+  .leaflet-container { background: #0f1117 !important; }
+  .leaflet-tile-pane { filter: brightness(0.65) saturate(0.7) hue-rotate(180deg) invert(1); }
+  .leaflet-popup-content-wrapper {
+    background: #161922 !important;
+    color: #eef0f5 !important;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  .leaflet-popup-tip { background: #161922 !important; }
+  .leaflet-control-zoom a {
+    background: #161922 !important;
+    color: #8b92a8 !important;
+    border-color: rgba(255,255,255,0.07) !important;
+  }
+}
+
+@layer components {
+  /* ── Botones reutilizables ── */
+  .btn-primary {
+    @apply flex items-center gap-2 px-5 py-2.5 rounded-sm bg-accent text-base font-head font-bold text-sm cursor-pointer border-none transition-all duration-200 hover:opacity-90 active:scale-95;
+  }
+  .btn-ghost {
+    @apply flex items-center gap-2 px-4 py-2 rounded-sm border border-border text-t-secondary text-sm cursor-pointer bg-transparent transition-all duration-200 hover:border-border-hover hover:text-t-primary;
+  }
+  .btn-danger {
+    @apply flex items-center gap-2 px-4 py-2 rounded-sm text-danger text-sm cursor-pointer transition-all duration-200;
+    background: rgba(255,77,109,0.1);
+    border: 1px solid rgba(255,77,109,0.25);
+  }
+
+  /* ── Inputs ── */
+  .input-dark {
+    @apply w-full px-3.5 py-2.5 rounded-sm bg-input border border-border text-t-primary text-sm outline-none transition-all duration-200 font-body placeholder:text-t-muted focus:border-accent/50;
+  }
+  .label-dark {
+    @apply text-xs font-medium text-t-muted tracking-wider uppercase;
+  }
+
+  /* ── Cards ── */
+  .card-dark {
+    @apply bg-card border border-border rounded-lg transition-all duration-200 hover:border-border-hover;
+  }
+
+  /* ── Badges ── */
+  .badge-green {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide text-accent;
+    background: rgba(0,229,176,0.12);
+    border: 1px solid rgba(0,229,176,0.25);
+  }
+  .badge-red {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide text-danger;
+    background: rgba(255,77,109,0.12);
+    border: 1px solid rgba(255,77,109,0.25);
+  }
+  .badge-blue {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide text-blue;
+    background: rgba(79,142,247,0.12);
+    border: 1px solid rgba(79,142,247,0.25);
+  }
+
+  /* ── Skeleton loader ── */
+  .skeleton {
+    background: linear-gradient(90deg, #161922 25%, #1d2130 50%, #161922 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.4s linear infinite;
+    @apply rounded-lg;
+  }
+
+  /* ── Chip filtro ── */
+  .filter-chip {
+    @apply px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap cursor-pointer border transition-all duration-150;
+  }
+  .filter-chip-active {
+    @apply border-accent text-accent;
+    background: rgba(0,229,176,0.1);
+  }
+  .filter-chip-inactive {
+    @apply border-border text-t-secondary bg-transparent hover:border-border-hover hover:text-t-primary;
+  }
+}
+
+@layer utilities {
+  .font-head { font-family: 'Syne', sans-serif; }
+  .font-body { font-family: 'DM Sans', sans-serif; }
+  .text-gradient {
+    background: linear-gradient(135deg, #00e5b0, #4f8ef7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .transition-wrapper{ display: contents; }
+}
+
+/* Toast overrides */
+.Vue-Toastification__toast {
+  background: #161922 !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: 12px !important;
+  color: #eef0f5 !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+.Vue-Toastification__progress-bar { background: #00e5b0 !important; }
+
+/* Transiciones de rutas */
+.route-enter-active, .route-leave-active { transition: opacity 0.25s, transform 0.25s; }
+.route-enter-from { opacity: 0; transform: translateY(10px); }
+.route-leave-to  { opacity: 0; transform: translateY(-6px); }
+
+
+.swal2-container {
+  z-index: 9999 !important;
+}
