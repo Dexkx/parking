@@ -1,8 +1,5 @@
 <template>
   <div class="h-full w-full rounded-lg overflow-hidden">
-    <button @click="locateUser" class="mi-boton-ubicacion">
-      📍 Mi Ubicación
-    </button>
     <LMap
       ref="mapRef"
       :zoom="12"
@@ -137,7 +134,7 @@ const createIcon = (disponible) => L.divIcon({
   className: '',
   html: `
     <div
-      class="flex items-center justify-center border-2 border-${disponible ? 'white' : '[#2a2d38]'} rounded-full size-8 -rotate-45 shadow-[0_4px_14px_rgba(0,0,0,0.5)]
+      class="flex items-center justify-center border-2 border-${disponible ? 'white' : '[#2a2d38]'} size-8 -rotate-45 shadow-[0_4px_14px_rgba(0,0,0,0.5)]
         rounded-[50%_50%_50%_0] bg-[--card]"
       style="--card: ${disponible ? '#00e5b0' : '#4e5568'};">
       <span
