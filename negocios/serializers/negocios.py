@@ -1,16 +1,16 @@
 from rest_framework import serializers
 from .. import models
-from core.models import Usuarios
-from core.serializers import PaisSR, CiudadSR, DepartamentoSR, StatusSRMixin, TipoColaboradorSR, UsuarioSR, TipoVehiculoSR
+from core.models import Usuarios, Cities
+from core.serializers import CountrySR, CitySR, StateSR, StatusSRMixin, TipoColaboradorSR, UsuarioSR, TipoVehiculoSR
 
 
 class NegocioSR(StatusSRMixin, serializers.ModelSerializer):
     creado_por = serializers.PrimaryKeyRelatedField(
         queryset=Usuarios.objects.all(), write_only=True
     )
-    nit = serializers.CharField(max_length=20, write_only=True)
-    numero_verificacion = serializers.IntegerField(write_only=True)
-    razon_social = serializers.CharField(max_length=225, write_only=True)
+    nit = serializers.CharField(max_length=20)
+    numero_verificacion = serializers.IntegerField()
+    razon_social = serializers.CharField(max_length=225)
     puntuacion = serializers.FloatField(read_only=True)
     sedes_count = serializers.SerializerMethodField(read_only=True)
 
@@ -25,7 +25,7 @@ class NegocioSR(StatusSRMixin, serializers.ModelSerializer):
             data['lat'] = float(primera_sede.lat) if primera_sede.lat else None
             data['lng'] = float(primera_sede.lng) if primera_sede.lng else None
             data['direccion'] = primera_sede.direccion
-            data['ciudad'] = CiudadSR(primera_sede.ciudad).data
+            data['ciudad'] = CitySR(primera_sede.city).data
         return data
 
     class Meta:
@@ -45,14 +45,21 @@ class SedeSR(StatusSRMixin, serializers.ModelSerializer):
     puntuacion = serializers.FloatField(read_only=True)
     puestos_count = serializers.SerializerMethodField(read_only=True)
 
+    city = serializers.PrimaryKeyRelatedField(
+        queryset=Cities.objects.all(), required=False
+    )
+
+    lat = serializers.DecimalField(max_digits=9, decimal_places=6, read_only=True)
+    lng = serializers.DecimalField(max_digits=9, decimal_places=6, read_only=True)
+
     def get_puestos_count(self, obj):
         return obj.puestos.activos().count()
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['ciudad'] = CiudadSR(instance.ciudad).data
-        data['departamento'] = DepartamentoSR(instance.departamento).data
-        data['pais'] = PaisSR(instance.pais).data
+        data['city'] = CitySR(instance.city).data
+        data['state'] = StateSR(instance.state).data
+        data['country'] = CountrySR(instance.country).data
         if instance.lat:
             data['lat'] = float(instance.lat)
         if instance.lng:
@@ -63,7 +70,7 @@ class SedeSR(StatusSRMixin, serializers.ModelSerializer):
         model = models.Sede
         fields = (
             "uuid", "negocio", "nombre", "direccion",
-            "pais", "departamento", "ciudad",
+            "country", "state", "city",
             "lat", "lng", "puntuacion", "puestos_count",
         )
 

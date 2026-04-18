@@ -38,27 +38,6 @@ class TipoColaboradorSR(serializers.ModelSerializer):
         fields = ("code", "descripcion")
 
 
-class PaisSR(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.Pais
-        fields = ("name",)
-
-
-class DepartamentoSR(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.Departamento
-        fields = ("name",)
-
-
-class CiudadSR(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.Ciudad
-        fields = ("name",)
-
-
 class VehiculoUsuarioSR(serializers.ModelSerializer):
     """
     Serializer para los vehículos registrados de un usuario.
@@ -67,7 +46,7 @@ class VehiculoUsuarioSR(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['tipo_vehiculo'] = TipoVehiculoSR(instance.tipo_vehiculo).data
+        data["tipo_vehiculo"] = TipoVehiculoSR(instance.tipo_vehiculo).data
         return data
 
     class Meta:

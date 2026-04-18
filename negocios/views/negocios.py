@@ -41,7 +41,7 @@ class SedeViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
     nested_instances = [
         {
             'lookup': 'negocio',
-            'field_name': 'negocio_id',
+            'field_name': 'negocio',
             'model_class': models.Negocio,
         }
     ]

@@ -151,7 +151,7 @@ class CompositeFKMixin:
         )
     """
     _prefix = 'new_'
-    
+
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -160,12 +160,12 @@ class CompositeFKMixin:
         self.check_object_permissions(self.request, obj)
 
         return obj
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         filters = self.get_filters_composite_fk()
         return queryset.filter(**filters)
-    
+
     def get_filters_composite_fk(self):
         params_required = self.url_params_required
 
@@ -175,7 +175,7 @@ class CompositeFKMixin:
         #     "attribute on the view correctly."
         #     % (self.__class__.__name__, params_required)
         # )
-        
+
         return {
             param.get("field_name"): lookup
             for param in params_required
@@ -185,13 +185,13 @@ class CompositeFKMixin:
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        
+
         if not hasattr(cls, "url_params_required"):
             assert False, "La clase debe tener el atributo 'url_params_required'"
 
         params = cls.url_params_required
-        segments_exists = getattr(cls, "url_existing_params", [])        
-        
+        segments_exists = getattr(cls, "url_existing_params", [])
+
         path_segments = [
             f"(?P<{param.get('lookup')}>[^/.]+)"
             for param in params
@@ -202,7 +202,7 @@ class CompositeFKMixin:
 
         def composite_fk(self, request, *args, **kwargs):
             method = request.method.lower()
-            
+
             match method:
                 case "get":
                     if kwargs.get('pk'):

@@ -4,9 +4,9 @@ from django.db import models
 from core.models import (
     ModelCore,
     Usuarios,
-    Ciudad,
-    Departamento,
-    Pais,
+    Cities,
+    States,
+    Countries,
     TipoVehiculo,
     TipoColaborador,
 )
@@ -20,9 +20,9 @@ class Negocio(ModelCore):
         max_length=120, db_comment="nombre para mostrar en la app"
     )
     direccion = models.TextField()
-    pais = models.ForeignKey(Pais, on_delete=models.PROTECT)
-    departamento = models.ForeignKey(Departamento, on_delete=models.PROTECT)
-    ciudad = models.ForeignKey(Ciudad, on_delete=models.PROTECT)
+    country = models.ForeignKey(Countries, on_delete=models.PROTECT)
+    state = models.ForeignKey(States, on_delete=models.PROTECT)
+    city = models.ForeignKey(Cities, on_delete=models.PROTECT)
     creado_por = models.ForeignKey(Usuarios, on_delete=models.PROTECT)
 
     class Meta:
@@ -71,14 +71,14 @@ class PuestoNegocio(ModelCore):
 
     class Meta:
         db_table = "puestos_negocio"
-        
+
     @cached_property
     def tarifas(self):
         if hasattr(self, 'tarifas'):
             tarifas = self.tarifas.objects.activos()
             if tarifas.exists():
                 return tarifas
-            
+
         tarifas = (
             TarifasNegocio.objects
             .filter(
@@ -89,7 +89,7 @@ class PuestoNegocio(ModelCore):
         )
         if taifas.exists():
             return tarifas
-        
+
         return (
             TarifasNegocio.objects
             .filter(
@@ -97,8 +97,8 @@ class PuestoNegocio(ModelCore):
                 tipo_vehiculo=self.tipo_vehiculo,
             ).activos()
         )
-                
-        
+
+
 
 class TarifasNegocio(ModelCore):
     pk = models.CompositePrimaryKey("negocio_id", "tipo_vehiculo_id", "tiempo")

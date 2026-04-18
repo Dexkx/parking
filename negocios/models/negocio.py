@@ -4,9 +4,9 @@ from django.db import models
 from core.models import (
     ModelCore,
     Usuarios,
-    Ciudad,
-    Departamento,
-    Pais,
+    Cities,
+    States,
+    Countries,
     TipoVehiculo,
     TipoColaborador,
 )
@@ -17,8 +17,10 @@ class Negocio(ModelCore):
     nit = models.CharField(max_length=20, primary_key=True)
     numero_verificacion = models.IntegerField(validators=(MinValueValidator(1),))
     razon_social = models.CharField(max_length=225)
-    nombre = models.CharField(max_length=120, db_comment="nombre para mostrar en la app")
-    creado_por = models.ForeignKey(Usuarios, on_delete=models.PROTECT)
+    nombre = models.CharField(
+        max_length=120, db_comment="nombre para mostrar en la app"
+    )
+    creado_por = models.ForeignKey(Usuarios, related_name="dueno_negocios", on_delete=models.PROTECT)
 
     class Meta:
         db_table = "negocios"
@@ -35,6 +37,19 @@ class Negocio(ModelCore):
             return 0.0
         return resenas.aggregate(puntuacion=models.Avg("puntuacion"))["puntuacion"]
 
+class ColaboradoresNegocio(ModelCore):
+    pk = models.CompositePrimaryKey("negocio_id", "usuario_id")
+    negocio = models.ForeignKey(
+        Negocio, related_name="colaboradores", on_delete=models.DO_NOTHING
+    )
+    usuario = models.ForeignKey(
+        Usuarios, related_name="negocios", on_delete=models.DO_NOTHING
+    )
+    tipo_colaborador = models.ForeignKey(TipoColaborador, on_delete=models.PROTECT)
+
+    class Meta:
+        db_table = "colaboradores_negocio"
+
 
 class Sede(ModelCore):
     """
@@ -44,24 +59,31 @@ class Sede(ModelCore):
     Un negocio puede tener múltiples sedes (ej: Parking S.A. con
     locales en el norte, sur y centro de la ciudad).
     """
+
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     negocio = models.ForeignKey(
-        Negocio, related_name='sedes', on_delete=models.DO_NOTHING,
-        db_comment="Negocio al que pertenece esta sede"
+        Negocio,
+        related_name="sedes",
+        on_delete=models.DO_NOTHING,
+        db_comment="Negocio al que pertenece esta sede",
     )
-    nombre = models.CharField(max_length=120, db_comment="Nombre de la sede (ej: Sede Norte)")
+    nombre = models.CharField(
+        max_length=120, db_comment="Nombre de la sede (ej: Sede Norte)"
+    )
     direccion = models.TextField(db_comment="Dirección física")
-    pais = models.ForeignKey(Pais, on_delete=models.PROTECT)
-    departamento = models.ForeignKey(Departamento, on_delete=models.PROTECT)
-    ciudad = models.ForeignKey(Ciudad, on_delete=models.PROTECT)
+    country = models.ForeignKey(Countries, on_delete=models.PROTECT)
+    state = models.ForeignKey(States, on_delete=models.PROTECT)
+    city = models.ForeignKey(Cities, null=True, blank=True, on_delete=models.PROTECT)
     # Coordenadas para el mapa
     lat = models.DecimalField(
-        max_digits=10, decimal_places=7,
-        null=True, blank=True, db_comment="Latitud GPS"
+        max_digits=10, decimal_places=7, null=True, blank=True, db_comment="Latitud GPS"
     )
     lng = models.DecimalField(
-        max_digits=10, decimal_places=7,
-        null=True, blank=True, db_comment="Longitud GPS"
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
+        db_comment="Longitud GPS",
     )
 
     class Meta:
@@ -79,33 +101,24 @@ class Sede(ModelCore):
         return f"{self.negocio.nombre} — {self.nombre}"
 
 
-class ColaboradoresNegocio(ModelCore):
-    pk = models.CompositePrimaryKey("negocio_id", "usuario_id")
-    negocio = models.ForeignKey(
-        Negocio, related_name="colaboradores", on_delete=models.DO_NOTHING
-    )
-    usuario = models.ForeignKey(
-        Usuarios, related_name="negocios", on_delete=models.DO_NOTHING
-    )
-    tipo_colaborador = models.ForeignKey(TipoColaborador, on_delete=models.PROTECT)
-
-    class Meta:
-        db_table = "colaboradores_negocio"
-
-
 class PuestoNegocio(ModelCore):
     """
     Puesto de parqueo dentro de una sede.
     La PK compuesta garantiza que no haya dos puestos
     con el mismo piso/número/tipo_vehículo en la misma sede.
     """
+
     pk = models.CompositePrimaryKey("sede_id", "piso", "numero", "tipo_vehiculo_id")
     sede = models.ForeignKey(
-        Sede, related_name="puestos", on_delete=models.DO_NOTHING,
-        db_comment="Sede donde está el puesto"
+        Sede,
+        related_name="puestos",
+        on_delete=models.DO_NOTHING,
+        db_comment="Sede donde está el puesto",
     )
     piso = models.CharField(max_length=20, db_comment="Piso (ej: '1', 'B1', 'Sótano')")
-    numero = models.IntegerField(validators=(MinValueValidator(1),), db_comment="Número del puesto")
+    numero = models.IntegerField(
+        validators=(MinValueValidator(1),), db_comment="Número del puesto"
+    )
     tipo_vehiculo = models.ForeignKey(TipoVehiculo, on_delete=models.PROTECT)
 
     class Meta:
@@ -121,16 +134,20 @@ class PuestoNegocio(ModelCore):
         """
         # 1. Tarifa específica del puesto
         t = TarifasNegocio.objects.filter(
-            sede=self.sede, piso=self.piso,
-            numero=self.numero, tipo_vehiculo=self.tipo_vehiculo
+            sede=self.sede,
+            piso=self.piso,
+            numero=self.numero,
+            tipo_vehiculo=self.tipo_vehiculo,
         ).activos()
         if t.exists():
             return t
 
         # 2. Tarifa del piso
         t = TarifasNegocio.objects.filter(
-            sede=self.sede, piso=self.piso,
-            tipo_vehiculo=self.tipo_vehiculo, numero__isnull=True
+            sede=self.sede,
+            piso=self.piso,
+            tipo_vehiculo=self.tipo_vehiculo,
+            numero__isnull=True,
         ).activos()
         if t.exists():
             return t
@@ -139,7 +156,8 @@ class PuestoNegocio(ModelCore):
         return TarifasNegocio.objects.filter(
             sede=self.sede,
             tipo_vehiculo=self.tipo_vehiculo,
-            piso__isnull=True, numero__isnull=True
+            piso__isnull=True,
+            numero__isnull=True,
         ).activos()
 
 
@@ -151,24 +169,28 @@ class TarifasNegocio(ModelCore):
     - Por piso (numero=None)
     - Por puesto específico (piso + numero definidos)
     """
+
     pk = models.CompositePrimaryKey("sede_id", "tipo_vehiculo_id", "tiempo")
-    sede = models.ForeignKey(
-        Sede, related_name="tarifas", on_delete=models.DO_NOTHING
-    )
+    sede = models.ForeignKey(Sede, related_name="tarifas", on_delete=models.DO_NOTHING)
     piso = models.CharField(
-        max_length=20, null=True, blank=True,
-        db_comment="Piso específico (null = aplica a toda la sede)"
+        max_length=20,
+        null=True,
+        blank=True,
+        db_comment="Piso específico (null = aplica a toda la sede)",
     )
     numero = models.IntegerField(
-        validators=(MinValueValidator(1),), null=True, blank=True,
-        db_comment="Número de puesto específico (null = aplica al piso)"
+        validators=(MinValueValidator(1),),
+        null=True,
+        blank=True,
+        db_comment="Número de puesto específico (null = aplica al piso)",
     )
     tipo_vehiculo = models.ForeignKey(TipoVehiculo, on_delete=models.PROTECT)
     tiempo = models.DurationField(db_comment="Fracción de tiempo (ej: 1h, 30min)")
     valor = models.DecimalField(
-        max_digits=10, decimal_places=2,
+        max_digits=10,
+        decimal_places=2,
         validators=(MinValueValidator(0),),
-        db_comment="Valor en COP"
+        db_comment="Valor en COP",
     )
 
     puesto = models.ForeignObject(
@@ -177,7 +199,8 @@ class TarifasNegocio(ModelCore):
         to_fields=("sede_id", "piso", "numero", "tipo_vehiculo_id"),
         on_delete=models.DO_NOTHING,
         related_name="tarifas_puesto",
-        null=True, blank=True,
+        null=True,
+        blank=True,
     )
 
     class Meta:
