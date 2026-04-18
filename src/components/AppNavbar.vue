@@ -1,6 +1,6 @@
 <template>
   <!-- nav sticky con blur glassmorphism -->
-  <nav class="sticky top-0 z-50 border-b border-border"
+  <nav class="sticky top-0 z-[9999] border-b border-border"
        style="background: rgba(8,10,15,0.85); backdrop-filter: blur(20px)">
 
     <div class="max-w-screen-xl mx-auto flex items-center justify-between h-16 px-6">

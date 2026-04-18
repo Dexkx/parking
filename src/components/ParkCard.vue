@@ -37,7 +37,7 @@
       </div>
       <div class="bg-input rounded-sm p-2.5">
         <div class="text-[10px] text-t-muted font-medium tracking-wider uppercase mb-1">Ciudad</div>
-        <div class="text-sm font-medium text-t-secondary truncate">{{ negocio.ciudad?.name ?? '—' }}</div>
+        <div class="text-sm font-medium text-t-secondary truncate">{{ negocio.city?.name ?? '—' }}</div>
       </div>
     </div>
 
