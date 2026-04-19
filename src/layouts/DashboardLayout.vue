@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   LayoutDashboard, Building2, MapPin, Layers, ParkingCircle,
-  DollarSign, Users, CalendarCheck, LogOut, ChevronRight, Menu
+  Earth, Users, CalendarCheck, LogOut, ChevronRight, Menu
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'vue-toastification'
@@ -15,8 +15,9 @@ const toast  = useToast()
 
 const NAV = [
   { to: '/',             icon: LayoutDashboard, label: 'Overview',     section: null },
-  { to: '/franquicias',  icon: Building2,       label: 'Franquicias',  section: 'Estructura' },
-  { to: '/negocios',     icon: ParkingCircle,   label: 'Negocios',     section: null },
+  { to: '/franquicias',  icon: Earth,       label: 'Franquicias',  section: 'Estructura' },
+  { to: '/negocios',     icon: Building2,   label: 'Negocios',     section: null },
+  { to: '/sedes',        icon: ParkingCircle,   label: 'Sedes',        section: null },
   { to: '/clientes',     icon: Users,           label: 'Clientes',     section: 'Operaciones' },
   { to: '/reservas',     icon: CalendarCheck,   label: 'Reservas',     section: null },
 ]
