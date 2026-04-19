@@ -70,17 +70,23 @@ class Usuarios(AbstractUser, ModelCore):
     nombre = models.TextField(db_comment="Nombre de la persona")
     password = models.TextField(db_comment="Contraseña del usuario")
 
+    def is_sede(self, uuid):
+        return self.sedes.filter(sede=uuid).activos().exists()
+
+    def is_dueno_sede(self, uuid):
+        return self.dueno_sedes.filter(sede=uuid).activos().exists()
+
     def is_negocio(self, nit):
-        return self.negocios.filter(negocio=nit).exists()
+        return self.negocios.filter(negocio=nit).activos().exists()
 
     def is_dueno_negocio(self, nit):
-        return self.dueno_negocios.filter(nit=nit).exists()
+        return self.dueno_negocios.filter(nit=nit).activos().exists()
 
     def is_franquicia(self, nit):
-        return self.franquicias.filter(negocio=nit).exists()
+        return self.franquicias.filter(negocio=nit).activos().exists()
 
     def is_dueno_franquicia(self, nit):
-        return self.dueno_franquicias.filter(nit=nit).exists()
+        return self.dueno_franquicias.filter(nit=nit).activos().exists()
 
     def reset_password(self):
         self.password = make_password(self.numero_id)

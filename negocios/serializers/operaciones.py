@@ -3,6 +3,41 @@ from .. import models
 from core.serializers import StatusSRMixin, UsuarioSR, TipoVehiculoSR
 
 
+class PuestoSR(StatusSRMixin, serializers.ModelSerializer):
+    sede = serializers.PrimaryKeyRelatedField(
+        queryset=models.Sede.objects.all(), write_only=True
+    )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["tipo_vehiculo"] = TipoVehiculoSR(instance.tipo_vehiculo).data
+        return data
+
+    class Meta:
+        model = models.Puestos
+        fields = ("sede", "piso", "numero", "tipo_vehiculo")
+
+
+class TarifaSR(StatusSRMixin, serializers.ModelSerializer):
+    sede = serializers.PrimaryKeyRelatedField(
+        queryset=models.Sede.objects.all(), write_only=True
+    )
+    piso = serializers.CharField(max_length=20, required=False, allow_null=True)
+    numero = serializers.IntegerField(required=False, allow_null=True)
+    tipo_vehiculo = serializers.PrimaryKeyRelatedField(
+        queryset=models.TipoVehiculo.objects.all()
+    )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["tipo_vehiculo"] = TipoVehiculoSR(instance.tipo_vehiculo).data
+        return data
+
+    class Meta:
+        model = models.Tarifas
+        fields = ("sede", "piso", "numero", "tipo_vehiculo", "tiempo", "valor")
+
+
 class ResenaSR(StatusSRMixin, serializers.ModelSerializer):
     negocio = serializers.PrimaryKeyRelatedField(
         queryset=models.Negocio.objects.all(), write_only=True
@@ -23,17 +58,21 @@ class ResenaSR(StatusSRMixin, serializers.ModelSerializer):
 
 class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
     uuid = serializers.UUIDField(read_only=True)
-    negocio = serializers.PrimaryKeyRelatedField(queryset=models.Negocio.objects.all(), write_only=True)
-    
+    negocio = serializers.PrimaryKeyRelatedField(
+        queryset=models.Negocio.objects.all(), write_only=True
+    )
+
     # Valor actualizado solo en negocios.signals.operaciones antes de guardar en la DB
-    valor_pagado = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.0, read_only=True)
-    
+    valor_pagado = serializers.DecimalField(
+        max_digits=10, decimal_places=2, min_value=0.0, read_only=True
+    )
+
     def to_representaion(self, instance):
         data = super().to_representation(instance)
-        
-        data['usuario'] = UsuarioSR(instance.usuario).data
-        data['tipo_vehiculo'] = TipoVehiculoSR(instance.tipo_vehiculo).data
-        
+
+        data["usuario"] = UsuarioSR(instance.usuario).data
+        data["tipo_vehiculo"] = TipoVehiculoSR(instance.tipo_vehiculo).data
+
         return data
 
     class Meta:

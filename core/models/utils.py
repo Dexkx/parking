@@ -27,7 +27,7 @@ class TipoIdentificacion(ModelCoreType):
 class TipoColaborador(ModelCoreType):
     value = None
     name = None
-    code = models.CharField(max_length=100, db_comment="Código")
+    code = models.CharField(max_length=100, primary_key=True, db_comment="Código")
 
     class Meta:
         db_table = "tipos_colaborador"

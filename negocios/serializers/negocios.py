@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .. import models
-from core.models import Usuarios, Cities
-from core.serializers import CountrySR, CitySR, StateSR, StatusSRMixin, TipoColaboradorSR, UsuarioSR, TipoVehiculoSR
+from core.models import Usuarios
+from core.serializers import StatusSRMixin, TipoColaboradorSR, UsuarioSR, TipoVehiculoSR
 
 
 class NegocioSR(StatusSRMixin, serializers.ModelSerializer):
@@ -36,49 +36,15 @@ class NegocioSR(StatusSRMixin, serializers.ModelSerializer):
         )
 
 
-class SedeSR(StatusSRMixin, serializers.ModelSerializer):
-    """Serializer para sedes de un negocio."""
-    uuid = serializers.UUIDField(read_only=True)
-    negocio = serializers.PrimaryKeyRelatedField(
-        queryset=models.Negocio.objects.all(), write_only=True
-    )
-    puntuacion = serializers.FloatField(read_only=True)
-    puestos_count = serializers.SerializerMethodField(read_only=True)
-
-    city = serializers.PrimaryKeyRelatedField(
-        queryset=Cities.objects.all(), required=False
-    )
-
-    lat = serializers.DecimalField(max_digits=9, decimal_places=6, read_only=True)
-    lng = serializers.DecimalField(max_digits=9, decimal_places=6, read_only=True)
-
-    def get_puestos_count(self, obj):
-        return obj.puestos.activos().count()
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['city'] = CitySR(instance.city).data
-        data['state'] = StateSR(instance.state).data
-        data['country'] = CountrySR(instance.country).data
-        if instance.lat:
-            data['lat'] = float(instance.lat)
-        if instance.lng:
-            data['lng'] = float(instance.lng)
-        return data
-
-    class Meta:
-        model = models.Sede
-        fields = (
-            "uuid", "negocio", "nombre", "direccion",
-            "country", "state", "city",
-            "lat", "lng", "puntuacion", "puestos_count",
-        )
-
-
 class ColaboradoresNegocioSR(StatusSRMixin, serializers.ModelSerializer):
     negocio = serializers.PrimaryKeyRelatedField(
         queryset=models.Negocio.objects.all(), write_only=True
     )
+    tipo_colaborador = serializers.PrimaryKeyRelatedField(
+        queryset=models.TipoColaborador.objects.all()
+    )
+
+    status = serializers.BooleanField(required=False)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -86,41 +52,17 @@ class ColaboradoresNegocioSR(StatusSRMixin, serializers.ModelSerializer):
         data['tipo_colaborador'] = TipoColaboradorSR(instance.tipo_colaborador).data
         return data
 
+    def validate(self, attrs):
+        user = attrs.get('usuario')
+        negocio = attrs.get('negocio')
+
+        if negocio.is_owner(user):
+            raise serializers.ValidationError("El dueño no puede agregarse como colaborador")
+
+        return super().validate(attrs)
+
     class Meta:
         model = models.ColaboradoresNegocio
-        fields = ('negocio', 'usuario', 'tipo_colaborador')
+        fields = ('negocio', 'usuario', 'tipo_colaborador', 'status')
 
 
-class PuestoNegocioSR(StatusSRMixin, serializers.ModelSerializer):
-    sede = serializers.PrimaryKeyRelatedField(
-        queryset=models.Sede.objects.all(), write_only=True
-    )
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['tipo_vehiculo'] = TipoVehiculoSR(instance.tipo_vehiculo).data
-        return data
-
-    class Meta:
-        model = models.PuestoNegocio
-        fields = ('sede', 'piso', 'numero', 'tipo_vehiculo')
-
-
-class TarifaNegocioSR(StatusSRMixin, serializers.ModelSerializer):
-    sede = serializers.PrimaryKeyRelatedField(
-        queryset=models.Sede.objects.all(), write_only=True
-    )
-    piso = serializers.CharField(max_length=20, required=False, allow_null=True)
-    numero = serializers.IntegerField(required=False, allow_null=True)
-    tipo_vehiculo = serializers.PrimaryKeyRelatedField(
-        queryset=models.TipoVehiculo.objects.all()
-    )
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['tipo_vehiculo'] = TipoVehiculoSR(instance.tipo_vehiculo).data
-        return data
-
-    class Meta:
-        model = models.TarifasNegocio
-        fields = ('sede', 'piso', 'numero', 'tipo_vehiculo', 'tiempo', 'valor')

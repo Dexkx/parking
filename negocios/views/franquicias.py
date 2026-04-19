@@ -22,6 +22,7 @@ class ColaboradoresFranquiciaViewSet(NestedRouterModelMixin, NewCreatedModelMixi
     """
     queryset = models.ColaboradresFranquicia.objects.all()
     serializer_class = ColaboradoresFranquiciaSR
+    lookup_field = "usuario"
     permission_classes = (IsAuthenticated,)
     nested_instances = [
         {

@@ -1,20 +1,5 @@
 from .. import models
-from ..models import Status
 from rest_framework import serializers
-
-
-class StatusSRMixin:
-    status = serializers.PrimaryKeyRelatedField(
-        queryset=Status.objects.all(), required=False
-    )
-
-    def get_field_names(self, declared_fields, info):
-        fields = super().get_field_names(declared_fields, info)
-
-        fields = list(fields)
-        if "status" not in fields:
-            fields.append("status")
-        return fields
 
 
 class TipoVehiculoSR(serializers.ModelSerializer):

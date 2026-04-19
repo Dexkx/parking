@@ -27,6 +27,9 @@ class Franquicias(ModelCore):
             ),
         )
 
+    def is_owner(self, user):
+        return self.creado_por == user
+
 class ColaboradresFranquicia(ModelCore):
     pk = models.CompositePrimaryKey('franquicia_id', 'usuario_id')
     franquicia = models.ForeignKey(Franquicias, related_name='colaboradores', on_delete=models.DO_NOTHING)
