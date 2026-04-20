@@ -7,7 +7,8 @@ const FranquiciasPage              = () => import('@/pages/FranquiciasPage.vue')
 const ColaboradoresFranquiciaPage  = () => import('@/pages/ColaboradoresFranquiciaPage.vue')
 const NegociosPage                 = () => import('@/pages/NegociosPage.vue')
 const ColaboradoresNegocioPage     = () => import('@/pages/ColaboradoresNegocioPage.vue')
-const SedesPage                    = () => import('@/pages/SedesPage.vue')
+const SedesGeneralPage             = () => import('@/pages/SedesGeneralPage.vue')   // ← menú sidebar
+const ColaboradoresSedePage        = () => import('@/pages/ColaboradoresSedePage.vue')
 const PuestosPage                  = () => import('@/pages/PuestosPage.vue')
 const TarifasPage                  = () => import('@/pages/TarifasPage.vue')
 const ClientesPage                 = () => import('@/pages/ClientesPage.vue')
@@ -20,55 +21,83 @@ const routes = [
   { path: '/', name: 'overview', component: OverviewPage, meta: { requiresAuth: true } },
 
   // ── Franquicias ────────────────────────────────────────────
-  { path: '/franquicias',
+  {
+    path: '/franquicias',
     name: 'franquicias',
     component: FranquiciasPage,
-    meta: { requiresAuth: true } },
-
-  { path: '/franquicias/:uuid/colaboradores',
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/franquicias/:uuid/colaboradores',
     name: 'colaboradores-franquicia',
     component: ColaboradoresFranquiciaPage,
-    meta: { requiresAuth: true } },
+    meta: { requiresAuth: true },
+  },
 
   // ── Negocios ───────────────────────────────────────────────
-  { path: '/negocios',
+  {
+    path: '/negocios',
     name: 'negocios',
     component: NegociosPage,
-    meta: { requiresAuth: true } },
-
-  { path: '/negocios/:nit/colaboradores',
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/negocios/:nit/colaboradores',
     name: 'colaboradores-negocio',
     component: ColaboradoresNegocioPage,
-    meta: { requiresAuth: true } },
+    meta: { requiresAuth: true },
+  },
 
-  // ── Sedes ──────────────────────────────────────────────────
-  { path: '/negocios/:nit/sedes',
-    name: 'sedes',
-    component: SedesPage,
-    meta: { requiresAuth: true } },
+  // ── Sedes (menú sidebar) ───────────────────────────────────
+  {
+    path: '/sedes',
+    name: 'sedes-general',
+    component: SedesGeneralPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/sedes/:uuid/colaboradores',
+    name: 'colaboradores-sede',
+    component: ColaboradoresSedePage,
+    meta: { requiresAuth: true },
+  },
 
-  // ── Puestos ────────────────────────────────────────────────
-  { path: '/negocios/:nit/sedes/:sede',
+  // ── Sedes (parametrización interna: pisos, puestos, tarifas)
+  // Se llega desde SedesGeneralPage → "Puestos" button
+  {
+    path: '/sedes/:sede/puestos',
     name: 'puestos',
     component: PuestosPage,
-    meta: { requiresAuth: true } },
+    meta: { requiresAuth: true },
+  },
 
-  // ── Tarifas ────────────────────────────────────────────────
-  { path: '/negocios/:nit/sedes/:sede/tarifas',
+  // ── Tarifas ────────────────────────────────────────────
+  {
+    path: '/negocios/:nit/sedes/:sede/tarifas',
     name: 'tarifas',
     component: TarifasPage,
-    meta: { requiresAuth: true } },
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/sedes/:sede/tarifas',
+    name: 'tarifas',
+    component: TarifasPage,
+    meta: { requiresAuth: true },
+  },
 
   // ── Operaciones ────────────────────────────────────────────
-  { path: '/clientes',
+  {
+    path: '/clientes',
     name: 'clientes',
     component: ClientesPage,
-    meta: { requiresAuth: true } },
-
-  { path: '/reservas',
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/reservas',
     name: 'reservas',
     component: ReservasPage,
-    meta: { requiresAuth: true } },
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({
@@ -77,7 +106,7 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 })
 
-// Guarda global: redirige al login si no hay sesión
+// Guarda global
 router.beforeEach((to) => {
   const auth = useAuthStore()
   if (to.meta.requiresAuth && !auth.isAuthenticated) return { name: 'login' }

@@ -19,13 +19,6 @@ onMounted(async () => {
     ])
     negocios.value = negRes.data?.results ?? negRes.data ?? []
     franquicias.value = franRes.data?.results ?? franRes.data ?? []
-
-    // Reservas de hoy de todos los negocios
-    const promesas = negocios.value.map(n =>
-      reservasApi.list(n.nit).then(r => r.data?.results ?? r.data ?? []).catch(() => [])
-    )
-    const todas = (await Promise.all(promesas)).flat()
-    reservasHoy.value = todas.filter(r => isToday(new Date(r.hf_inicio)))
   } finally {
     loading.value = false
   }
@@ -33,6 +26,7 @@ onMounted(async () => {
 
 const totalSedes = computed(() => negocios.value.reduce((a, n) => a + (n.sedes_count ?? 0), 0))
 const ingresoHoy = computed(() => reservasHoy.value.reduce((a, r) => a + Number(r.valor_pagado ?? 0), 0))
+const totalReservasHoy = computed(() => negocios.value.reduce((a, n) => a + (n.reservas_hoy_count ?? 0), 0))
 const today = format(new Date(), "EEEE dd 'de' MMMM", { locale: es })
 </script>
 
@@ -55,7 +49,7 @@ const today = format(new Date(), "EEEE dd 'de' MMMM", { locale: es })
       <StatCard label="Negocios" :value="negocios.length" :icon="ParkingCircle" color="accent"
         sub="Parqueaderos registrados" />
       <StatCard label="Sedes" :value="totalSedes" :icon="MapPin" color="blue" sub="Ubicaciones físicas" />
-      <StatCard label="Reservas hoy" :value="reservasHoy.length" :icon="CalendarCheck" color="warn"
+      <StatCard label="Reservas hoy" :value="totalReservasHoy" :icon="CalendarCheck" color="warn"
         :sub="`$${ingresoHoy.toLocaleString('es-CO')} COP`" />
     </div>
 

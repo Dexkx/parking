@@ -12,17 +12,17 @@
  */
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Plus, Pencil, Trash2, Users, ParkingCircle, Check, X } from 'lucide-vue-next'
+import { ArrowLeft, Plus, Pencil, Trash2, Users, ParkingCircle, MapPin } from 'lucide-vue-next'
 import CrudModal from '@/components/CrudModal.vue'
-import { negociosApi, catalogosApi } from '@/api/axios'
+import { sedesApi, catalogosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
 
 const route  = useRoute()
 const router = useRouter()
 const toast  = useToast()
 
-const nit     = route.params.nit
-const negocio = ref(null)
+const uuid    = route.params.uuid
+const sede    = ref(null)
 const items   = ref([])
 const tipos   = ref([])
 const loading = ref(true)
@@ -35,13 +35,13 @@ const emptyForm = () => ({ usuario: '', tipo_colaborador: '' })
 const form = ref(emptyForm())
 
 onMounted(async () => {
-  const [negRes, colRes, tiposRes] = await Promise.all([
-    negociosApi.list(),
-    negociosApi.colaboradores(nit),
+  const [sedRes, colRes, tiposRes] = await Promise.all([
+    sedesApi.list(),
+    sedesApi.colaboradores(uuid),
     catalogosApi.tiposColaborador(),
   ])
-  const negs    = negRes.data?.results   ?? negRes.data   ?? []
-  negocio.value = negs.find(n => n.nit === nit) ?? null
+  const sedes    = sedRes.data?.results   ?? sedRes.data   ?? []
+  sede.value = sedes.find(n => n.uuid === uuid) ?? null
   items.value   = colRes.data?.results   ?? colRes.data   ?? []
   tipos.value   = tiposRes.data?.results ?? tiposRes.data ?? []
   loading.value = false
@@ -68,15 +68,15 @@ async function handleSubmit() {
   saving.value = true
   try {
     if (modal.value.mode === 'create') {
-      await negociosApi.addColaborador(nit, form.value)
+      await sedesApi.addColaborador(uuid, form.value)
       toast.success('Colaborador agregado correctamente')
     } else {
       const userId = modal.value.item?.usuario?.numero_id ?? modal.value.item?.usuario
-      await negociosApi.editColaborador(nit, userId, { tipo_colaborador: form.value.tipo_colaborador })
+      await sedesApi.editColaborador(uuid, userId, { tipo_colaborador: form.value.tipo_colaborador })
       toast.success('Tipo de colaborador actualizado')
     }
     closeModal()
-    const res = await negociosApi.colaboradores(nit)
+    const res = await sedesApi.colaboradores(uuid)
     items.value = res.data?.results ?? res.data ?? []
   } catch (err) {
     const data = err.response?.data
@@ -90,7 +90,7 @@ async function handleDelete(col) {
   if (!confirm(`¿Eliminar a "${nombre}" del negocio?`)) return
   try {
     const userId = col.usuario?.numero_id ?? col.usuario
-    await negociosApi.removeColaborador(nit, userId)
+    await sedesApi.removeColaborador(uuid, userId)
     toast.success('Colaborador eliminado')
     items.value = items.value.filter(c =>
       (c.usuario?.numero_id ?? c.usuario) !== userId
@@ -124,19 +124,22 @@ const inicial = (col) =>
     <!-- Back -->
     <button class="flex items-center gap-1.5 text-xs text-t-muted hover:text-t-primary transition-colors mb-5"
             @click="router.back()">
-      <ArrowLeft :size="13" /> Volver a negocios
+      <ArrowLeft :size="13" /> Volver a sedes
     </button>
 
     <!-- Header -->
     <div class="flex justify-between items-start mb-7">
       <div>
         <div class="flex items-center gap-2 mb-1">
-          <ParkingCircle :size="14" class="text-accent" />
-          <span class="text-xs text-t-muted font-medium">{{ negocio?.nombre ?? nit }}</span>
+          <MapPin :size="20" class="text-blue" />
+          <div class="flex flex-col">
+            <span class="text-xs text-t-secondary font-medium">{{ sede?.nombre ?? uuid }}</span>
+            <span class="text-xs text-t-muted font-medium italic">{{ sede?.lat }}, {{ sede?.lng }}</span>
+          </div>
         </div>
         <h1 class="font-head font-extrabold text-2xl text-t-primary tracking-tight">Colaboradores</h1>
         <p class="text-t-secondary text-sm mt-1">
-          Personas con acceso al dashboard de este negocio. El dueño no puede ser eliminado.
+          Empleados con acceso a la gestión de la sede.
         </p>
       </div>
       <button class="btn-primary" @click="openCreate">

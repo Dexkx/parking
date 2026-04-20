@@ -1,45 +1,69 @@
 <script setup>
 /**
  * NegociosPage.vue
- * CRUD de negocios. El botón de colaboradores ahora navega
- * a /negocios/:nit/colaboradores en vez de abrir un modal.
+ *
+ * Cambios respecto a versión anterior:
+ *  - Selector de franquicia en la parte superior (filtra la lista)
+ *  - Pre-selecciona franquicia si viene ?franquicia=uuid en la URL
+ *  - Quita la stat "Ciudad" de las tarjetas (queda Sedes + Puntuación)
+ *  - "Gestionar sedes" navega a /sedes?negocio=nit (SedesGeneralPage)
+ *  - "Colaboradores" navega a /negocios/:nit/colaboradores
  */
-import { ref, onMounted } from 'vue'
-import { Plus, Pencil, ThumbsDown, ThumbsUp, ParkingCircle, MapPin, ChevronRight, Users, ThumbsUpIcon } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Plus, Pencil, ThumbsDown, ThumbsUp, ParkingCircle, MapPin, ChevronRight, Users, Building2 } from 'lucide-vue-next'
 import CrudModal from '@/components/CrudModal.vue'
-import { negociosApi } from '@/api/axios'
+import { negociosApi, franquiciasApi } from '@/api/axios'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'vue-toastification'
 
+const route = useRoute()
 const router = useRouter()
 const toast  = useToast()
 const auth   = useAuthStore()
 
-const items   = ref([])
-const loading = ref(true)
-const saving  = ref(false)
-const modal   = ref({ open: false, mode: 'create', item: null })
+const items          = ref([])   // todos los negocios
+const franquicias    = ref([])
+const franqActiva    = ref(route.query.franquicia ?? '')   // uuid de franquicia seleccionada ('' = todas)
+
+const loading        = ref(true)
+const saving         = ref(false)
+const modal          = ref({ open: false, mode: 'create', item: null })
 
 const emptyForm = () => ({
   nit: '', numero_verificacion: '', razon_social: '', nombre: '',
-  creado_por: auth.user?.numero_id ?? '',
+  creado_por: auth.user?.numero_id ?? '', franquicia: franqActiva.value ?? ''
 })
 const form = ref(emptyForm())
 
+// ── Filtrado por franquicia ─────────────────────────────────
+const negociosFiltrados = computed(() => {
+  router.push(franqActiva.value ? { query: { franquicia: franqActiva.value } } : {})
+
+  if (!franqActiva.value) return items.value
+
+  return items.value.filter(n => n.franquicia?.uuid === franqActiva.value)
+})
+
+// ── Carga inicial ───────────────────────────────────────────
 onMounted(async () => {
   loading.value = true
-  const res = await negociosApi.list()
-  items.value  = res.data?.results ?? res.data ?? []
+  const [negRes, franqRes] = await Promise.all([
+    negociosApi.list(),
+    franquiciasApi.list(),
+  ])
+  items.value      = negRes.data?.results   ?? negRes.data   ?? []
+  franquicias.value = franqRes.data?.results ?? franqRes.data ?? []
   loading.value = false
 })
 
+// ── CRUD Negocios ───────────────────────────────────────────
 function openCreate() {
   form.value = emptyForm()
   modal.value = { open: true, mode: 'create', item: null }
 }
 function openEdit(item) {
-  form.value  = { ...item, creado_por: item.creado_por ?? auth.user?.numero_id }
+  form.value  = { ...item, creado_por: item.creado_por ?? auth.user?.numero_id, franquicia: item.franquicia?.uuid }
   modal.value = { open: true, mode: 'edit', item }
 }
 function closeModal() { modal.value.open = false }
@@ -58,42 +82,58 @@ async function handleSubmit() {
     const res = await negociosApi.list()
     items.value = res.data?.results ?? res.data ?? []
   } catch (err) {
-    const msg = err.response?.data
-      ? Object.values(err.response.data).flat().join(' · ')
-      : 'Error al guardar'
-    toast.error(msg)
+    toast.error(err.response?.data ? Object.values(err.response.data).flat().join(' · ') : 'Error al guardar')
   } finally { saving.value = false }
 }
 
 async function editStatus(item) {
-  if (!confirm(`¿Desactivar el negocio "${item.nombre}"? Será como eliminar el negocio, sus clientes no podrán acceder a él.`)) return
+  const accion = item.status === 'Activo' ? 'Desactivar' : 'Activar'
+  if (!confirm(`¿${accion} el negocio "${item.nombre}"?`)) return
   try {
     const res = await negociosApi.editStatus(item.nit, item.status === 'Activo' ? 'Inactivo' : 'Activo')
     toast.success(`Negocio ${res.data?.status}`)
-    const itemUpdate = items.value.find(n => n.nit === item.nit)
-    itemUpdate.status = res.data?.status
-  } catch { toast.error('No se pudo eliminar') }
+    const found = items.value.find(n => n.nit === item.nit)
+    if (found) found.status = res.data?.status
+  } catch { toast.error('No se pudo cambiar el estado') }
 }
 
 // ── Navegación ──────────────────────────────────────────────
-const irSedes         = (nit) => router.push({ name: 'sedes',                  params: { nit } })
-const irColaboradores = (nit) => router.push({ name: 'colaboradores-negocio',  params: { nit } })
+// Sedes → va a la página general de sedes filtrada por este negocio
+const irSedes         = (nit) => router.push({ name: 'sedes-general', query: { negocio: nit } })
+const irColaboradores = (nit) => router.push({ name: 'colaboradores-negocio', params: { nit } })
 </script>
 
 <template>
   <div class="p-6 max-w-screen-lg mx-auto">
 
     <!-- Header -->
-    <div class="flex justify-between items-start mb-7">
+    <div class="flex justify-between items-start mb-6">
       <div>
         <h1 class="font-head font-extrabold text-2xl text-t-primary tracking-tight">Negocios</h1>
         <p class="text-t-secondary text-sm mt-1">
-          Cada negocio puede tener múltiples sedes. Haz clic en → para gestionar sus sedes.
+          Cada negocio puede tener múltiples sedes. Usa el filtro para ver por franquicia.
         </p>
       </div>
       <button class="btn-primary" @click="openCreate">
         <Plus :size="15" /> Nuevo negocio
       </button>
+    </div>
+
+    <!-- ── Filtro por franquicia ── -->
+    <div class="flex items-center gap-3 mb-5 p-4 card-dark rounded-lg">
+      <div class="w-9 h-9 rounded-sm bg-purple/10 border border-purple/20 flex items-center justify-center shrink-0">
+        <Building2 :size="16" class="text-purple" />
+      </div>
+      <div class="flex-1">
+        <div class="label-dark mb-1">FILTRAR POR FRANQUICIA</div>
+        <select class="input-dark" v-model="franqActiva">
+          <option value="">Todos los negocios</option>
+          <option v-for="f in franquicias" :key="f.uuid" :value="f.uuid">{{ f.nombre }}</option>
+        </select>
+      </div>
+      <div class="shrink-0 text-xs text-t-muted">
+        {{ negociosFiltrados.length }} negocio{{ negociosFiltrados.length !== 1 ? 's' : '' }}
+      </div>
     </div>
 
     <!-- Skeleton -->
@@ -102,18 +142,20 @@ const irColaboradores = (nit) => router.push({ name: 'colaboradores-negocio',  p
     </div>
 
     <!-- Vacío -->
-    <div v-else-if="items.length === 0" class="card-dark rounded-lg py-16 text-center">
+    <div v-else-if="negociosFiltrados.length === 0" class="card-dark rounded-lg py-16 text-center">
       <ParkingCircle :size="40" class="text-t-muted mx-auto mb-3" :stroke-width="1" />
       <p class="font-head font-bold text-t-primary mb-1">Sin negocios</p>
-      <p class="text-sm text-t-secondary">Registra tu primer parqueadero para comenzar.</p>
+      <p class="text-sm text-t-secondary">
+        {{ franqActiva ? 'Esta franquicia no tiene negocios asignados.' : 'Registra tu primer parqueadero para comenzar.' }}
+      </p>
     </div>
 
     <!-- Grid de tarjetas -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div v-for="n in items" :key="n.nit"
+      <div v-for="n in negociosFiltrados" :key="n.nit"
            class="card-dark rounded-lg overflow-hidden hover:border-border-hover transition-all animate-fade-up">
 
-        <!-- Top -->
+           <!-- Top -->
         <div class="flex items-start justify-between p-4 pb-3">
           <div class="flex items-start gap-3 flex-1 min-w-0">
             <div class="w-9 h-9 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
@@ -129,8 +171,8 @@ const irColaboradores = (nit) => router.push({ name: 'colaboradores-negocio',  p
           </span>
         </div>
 
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-px bg-border mx-4 rounded-sm overflow-hidden mb-3">
+        <!-- Stats: solo Sedes y Puntuación (sin Ciudad) -->
+        <div class="grid grid-cols-2 gap-px bg-border mx-4 rounded-sm overflow-hidden mb-3">
           <div class="bg-input px-3 py-2 text-center">
             <div class="text-[10px] text-t-muted uppercase tracking-wider mb-0.5">Sedes</div>
             <div class="font-head font-bold text-accent text-sm">{{ n.sedes_count ?? 0 }}</div>
@@ -141,10 +183,6 @@ const irColaboradores = (nit) => router.push({ name: 'colaboradores-negocio',  p
               {{ n.puntuacion ? Number(n.puntuacion).toFixed(1) : '—' }} ★
             </div>
           </div>
-          <div class="bg-input px-3 py-2 text-center">
-            <div class="text-[10px] text-t-muted uppercase tracking-wider mb-0.5">Ciudad</div>
-            <div class="text-t-secondary text-xs truncate">{{ n.ciudad?.name ?? '—' }}</div>
-          </div>
         </div>
 
         <!-- Footer acciones -->
@@ -153,21 +191,23 @@ const irColaboradores = (nit) => router.push({ name: 'colaboradores-negocio',  p
             <button class="btn-icon w-7 h-7" title="Editar negocio" @click="openEdit(n)">
               <Pencil :size="12" />
             </button>
-            <!-- ← Navega a página de colaboradores -->
             <button class="btn-icon w-7 h-7" title="Gestionar colaboradores"
                     @click="irColaboradores(n.nit)">
               <Users :size="12" />
             </button>
-            <button class="btn-icon w-7 h-7  "
-                    :class="{ 'hover:text-danger': n.status === 'Activo', 'hover:text-accent': n.status === 'Inactivo',
-                      'hover:border-danger/30': n.status === 'Activo', 'hover:border-accent/30': n.status === 'Inactivo'
+            <button class="btn-icon w-7 h-7"
+                    :class="{
+                      'hover:text-danger hover:border-danger/30': n.status === 'Activo',
+                      'hover:text-accent hover:border-accent/30': n.status === 'Inactivo',
                     }"
-                    :title="n.status === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(n)">
-
+                    :title="n.status === 'Activo' ? 'Desactivar' : 'Activar'"
+                    @click="editStatus(n)">
               <ThumbsUp :size="12" v-if="n.status === 'Inactivo'" />
               <ThumbsDown :size="12" v-else />
             </button>
           </div>
+
+          <!-- ← Navega a /sedes?negocio=nit -->
           <button class="flex items-center gap-1.5 text-xs text-accent hover:underline font-medium"
                   @click="irSedes(n.nit)">
             <MapPin :size="12" /> Gestionar sedes <ChevronRight :size="12" />
@@ -201,6 +241,13 @@ const irColaboradores = (nit) => router.push({ name: 'colaboradores-negocio',  p
           <label class="label-dark">RAZÓN SOCIAL</label>
           <input class="input-dark" v-model="form.razon_social"
                  placeholder="Razón social completa" required />
+        </div>
+        <div class="col-span-2">
+          <label for="franquicia" class="label-dark">FRANQUICIA</label>
+          <select id="franquicia" class="input-dark" v-model="form.franquicia">
+            <option value="">Selecciona una franquicia</option>
+            <option v-for="f in franquicias" :key="f.uuid" :value="f.uuid">{{ f.nombre }}</option>
+          </select>
         </div>
       </div>
     </CrudModal>

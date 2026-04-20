@@ -141,7 +141,7 @@ const inicial     = (col) => (col.usuario?.nombre ?? col.usuario?.numero_id ?? '
             {{ inicial(col) }}
           </div>
         </div>
-        <div class="flex flex-col justify-center py-3 min-w-0">
+        <div class="flex flex-col justify-center ml-4 py-3 min-w-0">
           <span class="font-medium text-t-primary text-sm truncate">{{ col.usuario?.nombre ?? '—' }}</span>
           <span class="font-mono text-[11px] text-t-muted">{{ col.usuario?.numero_id ?? col.usuario }}</span>
         </div>
@@ -163,7 +163,7 @@ const inicial     = (col) => (col.usuario?.nombre ?? col.usuario?.numero_id ?? '
       <div v-for="r in [
         { label: 'Dueño', desc: 'Acceso total a la franquicia.', badge: 'badge-purple' },
         { label: 'Administrador', desc: 'Gestiona negocios y sedes.', badge: 'badge-blue' },
-        { label: 'Trabajador', desc: 'Acceso de solo lectura.', badge: 'badge-green' },
+        { label: 'Empleado', desc: 'Acceso de solo lectura.', badge: 'badge-green' },
       ]" :key="r.label" class="bg-input/50 rounded-lg p-3 border border-border text-xs">
         <span :class="[r.badge, 'mb-1.5 inline-flex']">{{ r.label }}</span>
         <p class="text-t-muted">{{ r.desc }}</p>

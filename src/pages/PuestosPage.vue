@@ -1,16 +1,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Plus, Trash2, ArrowLeft, ParkingCircle, DollarSign, Layers, ChevronRight } from 'lucide-vue-next'
+import { Plus, Trash2, ArrowLeft, LandPlot, DollarSign, Layers, MapPin } from 'lucide-vue-next'
 import CrudModal from '@/components/CrudModal.vue'
-import { puestosApi, sedesApi, catalogosApi } from '@/api/axios'
+import { puestosSedeApi, sedesApi, catalogosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
 
 const route  = useRoute()
 const router = useRouter()
 const toast  = useToast()
 
-const nit     = route.params.nit
+// const nit     = route.params.nit
 const sedeId  = route.params.sede
 
 const sede         = ref(null)
@@ -26,8 +26,8 @@ const form = ref(emptyForm())
 
 onMounted(async () => {
   const [sedeRes, puestosRes, tvRes] = await Promise.all([
-    sedesApi.list(nit),
-    puestosApi.list(nit, sedeId),
+    sedesApi.list(),
+    puestosSedeApi.list(sedeId),
     catalogosApi.tiposVehiculo(),
   ])
   const sedes = sedeRes.data?.results ?? sedeRes.data ?? []
@@ -57,10 +57,10 @@ function closeModal() { modal.value.open = false }
 async function handleSubmit() {
   saving.value = true
   try {
-    await puestosApi.create(nit, sedeId, form.value)
+    await puestosSedeApi.create(sedeId, form.value)
     toast.success('Puesto creado')
     closeModal()
-    const res = await puestosApi.list(nit, sedeId)
+    const res = await puestosSedeApi.list(sedeId)
     puestos.value = res.data?.results ?? res.data ?? []
     if (!pisoActivo.value) pisoActivo.value = pisos.value[0]
   } catch (err) {
@@ -71,13 +71,13 @@ async function handleSubmit() {
 async function handleDelete(p) {
   if (!confirm(`¿Eliminar el puesto #${p.numero} del piso ${p.piso}?`)) return
   try {
-    await puestosApi.remove(nit, sedeId, `${p.piso}-${p.numero}-${p.tipo_vehiculo_id}`)
+    await puestosSedeApi.remove(sedeId, p.piso, p.numero, p.tipo_vehiculo.id)
     toast.success('Puesto eliminado')
-    puestos.value = puestos.value.filter(x => !(x.piso === p.piso && x.numero === p.numero && x.tipo_vehiculo_id === p.tipo_vehiculo_id))
+    puestos.value = puestos.value.filter(x => !(x.piso === p.piso && x.numero === p.numero && x.tipo_vehiculo.id === p.tipo_vehiculo.id))
   } catch { toast.error('No se pudo eliminar') }
 }
 
-const irTarifas = () => router.push({ name: 'tarifas', params: { nit, sede: sedeId } })
+const irTarifas = () => router.push({ name: 'tarifas', params: { sede: sedeId } })
 </script>
 
 <template>
@@ -92,7 +92,7 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { nit, sede: sede
     <div class="flex justify-between items-start mb-7">
       <div>
         <div class="flex items-center gap-2 mb-1">
-          <ParkingCircle :size="14" class="text-accent" />
+          <MapPin :size="14" class="text-blue" />
           <span class="text-xs text-t-muted">{{ sede?.nombre ?? sedeId }}</span>
         </div>
         <h1 class="font-head font-extrabold text-2xl text-t-primary tracking-tight">Pisos y Puestos</h1>
@@ -137,7 +137,7 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { nit, sede: sede
       <div class="flex-1 card-dark rounded-lg overflow-hidden">
 
         <div v-if="!pisoActivo && pisos.length === 0" class="py-16 text-center text-t-muted">
-          <ParkingCircle :size="36" :stroke-width="1" class="mx-auto mb-3" />
+          <LandPlot :size="36" :stroke-width="1" class="mx-auto mb-3" />
           <p class="font-head font-bold text-t-primary mb-1">Sin puestos</p>
           <p class="text-sm">Crea el primer puesto indicando el piso y número.</p>
         </div>
@@ -148,7 +148,7 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { nit, sede: sede
             <div class="flex items-center gap-2">
               <Layers :size="14" class="text-accent" />
               <span class="font-head font-bold text-sm text-t-primary">Piso {{ pisoActivo }}</span>
-              <span class="badge-blue">{{ puestosDelPiso.length }} puestos</span>
+              <span class="badge-blue">{{ puestosDelPiso.length }} puesto{{ puestosDelPiso.length === 1 ? '' : 's' }}</span>
             </div>
           </div>
 
@@ -196,7 +196,7 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { nit, sede: sede
         <label class="label-dark">TIPO DE VEHÍCULO</label>
         <select class="input-dark" v-model="form.tipo_vehiculo" required>
           <option value="">Selecciona un tipo</option>
-          <option v-for="tv in tiposVeh" :key="tv.name" :value="tv.name">{{ tv.name }}</option>
+          <option v-for="tv in tiposVeh" :key="tv.id" :value="tv.id">{{ tv.name }}</option>
         </select>
       </div>
       <div class="bg-input/50 rounded-sm p-3 text-xs text-t-muted border border-border">

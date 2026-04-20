@@ -10,7 +10,17 @@ export default defineConfig({
   server: {
     port: 5174,
     proxy: {
-      '/api': { target: 'http://localhost:8000', changeOrigin: true }
+      '/api': { target: 'http://localhost:8000', changeOrigin: true },
+      '/geocode-api': {
+        target: 'https://api.distancematrix.ai',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/geocode-api/, '')
+      },
+      '/nomination-api': {
+        target: 'https://nominatim.openstreetmap.org',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/nomination-api/, '')
+      }
     }
   }
 })

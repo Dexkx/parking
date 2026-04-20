@@ -11,71 +11,37 @@
  *   // → { lat: 4.6097, lng: -74.0817 } o null si no encuentra
  */
 import { ref } from 'vue'
+import { search } from '@/api/nominatim'
 
-const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search'
-
-// Caché en memoria para evitar llamadas repetidas
-const cache = new Map()
 
 export function useGeocoder() {
   const geocoding = ref(false)   // true mientras carga
-  const error     = ref(null)    // mensaje de error si falla
+  const error = ref(null)    // mensaje de error si falla
 
-  /**
-   * Convierte una dirección en coordenadas.
-   * @param {string} direccion - Texto de la dirección
-   * @param {string} [ciudad]  - Ciudad o país para afinar la búsqueda
-   * @returns {Promise<{lat: number, lng: number} | null>}
-   */
-  async function geocodificar(direccion, ciudad = 'Colombia') {
+  async function geocodificar(direccion, city, state) {
     if (!direccion?.trim()) return null
 
-    // Query combinada para mayor precisión
-    const query = [direccion.trim(), ciudad.trim()].filter(Boolean).join(', ')
+    const query = [direccion.trim(), city, state].filter(Boolean).join(', ')
 
     // Revisar caché
-    if (cache.has(query)) return cache.get(query)
+    // if (cache.has(query)) return cache.get(query)
 
     geocoding.value = true
     error.value     = null
 
     try {
-      const params = new URLSearchParams({
-        q:              query,
-        format:         'json',
-        limit:          '1',
-        addressdetails: '0',
-      })
+      const results = await search(query)
 
-      const res = await fetch(`${NOMINATIM_URL}?${params}`, {
-        headers: {
-          // Nominatim requiere User-Agent descriptivo para identificar la app
-          'Accept-Language': 'es',
-        },
-      })
-
-      if (!res.ok) throw new Error(`Nominatim HTTP ${res.status}`)
-
-      const data = await res.json()
-
-      if (!data?.length) {
+      if (!results?.length) {
         error.value = 'No se encontraron coordenadas para esta dirección'
-        return null
+        return []
       }
 
-      const coords = {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon),
-      }
-
-      // Guardar en caché
-      cache.set(query, coords)
-      return coords
-
+      return results
     } catch (e) {
-      error.value = 'Error al consultar el servicio de mapas. Verifica tu conexión.'
+      error.value = 'Error al consultar el servicio de mapas.'
       console.error('[useGeocoder]', e)
-      return null
+      return []
     } finally {
       geocoding.value = false
     }

@@ -3,14 +3,15 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Plus, Trash2, ArrowLeft, DollarSign, Clock } from 'lucide-vue-next'
 import CrudModal from '@/components/CrudModal.vue'
-import { tarifasApi, sedesApi, catalogosApi } from '@/api/axios'
+import { tarifasSedeApi, sedesApi, catalogosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
+import { negociosApi } from '../api/axios'
 
 const route  = useRoute()
 const router = useRouter()
 const toast  = useToast()
 
-const nit    = route.params.nit
+// const nit    = route.params.nit
 const sedeId = route.params.sede
 
 const sede      = ref(null)
@@ -24,17 +25,18 @@ const modal     = ref({ open: false })
 const durHoras = ref(1)
 const durMins  = ref(0)
 
-const emptyForm = () => ({ sede: sedeId, tipo_vehiculo: '', piso: '', numero: null, valor: '' })
+const emptyForm = () => ({ sede: sedeId, negocio: sede.value?.negocio.nit ?? '', tipo_vehiculo: '', piso: '', numero: null, valor: '' })
 const form = ref(emptyForm())
 
 onMounted(async () => {
   const [sedeRes, tarifasRes, tvRes] = await Promise.all([
-    sedesApi.list(nit),
-    tarifasApi.list(nit, sedeId),
+    sedesApi.list(),
+    tarifasSedeApi.list(sedeId),
     catalogosApi.tiposVehiculo(),
   ])
   const sedes = sedeRes.data?.results ?? sedeRes.data ?? []
   sede.value    = sedes.find(s => s.uuid === sedeId) ?? null
+  console.log(sede.value)
   items.value   = tarifasRes.data?.results ?? tarifasRes.data ?? []
   tiposVeh.value = tvRes.data?.results ?? tvRes.data ?? []
   loading.value = false
@@ -57,10 +59,11 @@ function buildTiempo() {
 async function handleSubmit() {
   saving.value = true
   try {
-    await tarifasApi.create(nit, sedeId, { ...form.value, tiempo: buildTiempo() })
+    console.log(form.value)
+    await tarifasSedeApi.create(sedeId, { ...form.value, tiempo: buildTiempo() })
     toast.success('Tarifa creada')
     closeModal()
-    const res = await tarifasApi.list(nit, sedeId)
+    const res = await tarifasSedeApi.list(sedeId)
     items.value = res.data?.results ?? res.data ?? []
   } catch (err) {
     toast.error(err.response?.data ? Object.values(err.response.data).flat().join(' · ') : 'Error al guardar')
@@ -70,7 +73,7 @@ async function handleSubmit() {
 async function handleDelete(item) {
   if (!confirm('¿Eliminar esta tarifa?')) return
   try {
-    await tarifasApi.remove(nit, sedeId, `${item.tipo_vehiculo_id}-${item.tiempo}`)
+    await tarifasSedeApi.remove(sedeId, `${item.tipo_vehiculo_id}-${item.tiempo}`)
     toast.success('Tarifa eliminada')
     items.value = items.value.filter(t => !(t.tipo_vehiculo_id === item.tipo_vehiculo_id && t.tiempo === item.tiempo))
   } catch { toast.error('No se pudo eliminar') }
@@ -193,7 +196,7 @@ const alcance = (t) => {
         <label class="label-dark">TIPO DE VEHÍCULO</label>
         <select class="input-dark" v-model="form.tipo_vehiculo" required>
           <option value="">Selecciona</option>
-          <option v-for="tv in tiposVeh" :key="tv.name" :value="tv.name">{{ tv.name }}</option>
+          <option v-for="tv in tiposVeh" :key="tv.id" :value="tv.id">{{ tv.name }}</option>
         </select>
       </div>
 
