@@ -51,7 +51,6 @@
         </LPopup>
       </LMarker>
 
-
     </LMap>
   </div>
 </template>
@@ -66,7 +65,7 @@
  *   center   → [lat, lng] centro del mapa
  */
 import { computed, h, onBeforeMount, reactive, ref, render } from 'vue'
-import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
+import { LMap, LTileLayer, LMarker, LPopup, LGeoJson } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
 import { MapPinHouse, Star } from 'lucide-vue-next'
 
