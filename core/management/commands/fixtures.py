@@ -5,7 +5,7 @@ from django.db import models
 import os, json
 
 MANUALES = (
-    "tipo_id_usuarios", "status", "tipo_colaborador"
+    "tipo_id_usuarios", "status", "tipo_colaborador", "tipo_vehiculos"
 )
 
 

@@ -14,6 +14,9 @@ class NegocioViewSet(ModelViewSet):
 
     queryset = models.Negocio.objects.all()
     serializer_class = NegocioSR
+    filterset_fields = {
+        "franquicia": ("exact",)
+    }
 
     def get_permissions(self):
         if self.action in ("list", "retrieve"):

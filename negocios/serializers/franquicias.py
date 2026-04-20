@@ -15,14 +15,21 @@ class FranquiciasSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSeri
         queryset=Usuarios.objects.all(), write_only=True
     )
 
+    negocios_count = serializers.SerializerMethodField(read_only=True)
+    def get_negocios_count(self, obj):
+        return obj.negocios.count()
+
     class Meta:
         model = models.Franquicias
-        fields = ('uuid', 'nit', 'numero_verificacion', 'razon_social', 'nombre', 'creado_por', 'status')
+        fields = ('uuid', 'nit', 'numero_verificacion', 'razon_social', 'nombre', 'creado_por', 'status', 'negocios_count')
 
 
 class ColaboradoresFranquiciaSR(StatusSRMixin, serializers.ModelSerializer):
     franquicia = serializers.PrimaryKeyRelatedField(
         queryset=models.Franquicias.objects.all(), write_only=True
+    )
+    usuario = serializers.PrimaryKeyRelatedField(
+        queryset=Usuarios.objects.all(), required=False
     )
 
     status = serializers.BooleanField(required=False)
@@ -34,10 +41,8 @@ class ColaboradoresFranquiciaSR(StatusSRMixin, serializers.ModelSerializer):
         return data
 
     def validate(self, attrs):
-        user = attrs.get('usuario')
         franquicia = attrs.get('franquicia')
-
-        if franquicia.is_owner(user):
+        if (user := attrs.get('usuario')) and franquicia.is_owner(user):
             raise serializers.ValidationError("El dueño no puede agregarse como colaborador")
 
         return super().validate(attrs)
@@ -46,21 +51,3 @@ class ColaboradoresFranquiciaSR(StatusSRMixin, serializers.ModelSerializer):
         model = models.ColaboradresFranquicia
         fields = ('franquicia', 'usuario', 'tipo_colaborador', 'status')
 
-
-class NegociosFranquiciaSR(StatusSRMixin, serializers.ModelSerializer):
-    franquicia = serializers.PrimaryKeyRelatedField(
-        queryset=models.Franquicias.objects.all(), write_only=True
-    )
-    negocio = serializers.PrimaryKeyRelatedField(
-        queryset=models.Negocio.objects.all(), write_only=True
-    )
-
-    def to_representation(self, instance):
-        from negocios.serializers.negocios import NegocioSR
-        data = super().to_representation(instance)
-        data['negocio'] = NegocioSR(instance.negocio).data
-        return data
-
-    class Meta:
-        model = models.NegociosFranquicia
-        fields = ('franquicia', 'negocio')

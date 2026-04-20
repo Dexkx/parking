@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .. import models
-from core.serializers import StatusSRMixin, UsuarioSR, TipoVehiculoSR
+from core.serializers import StatusSRMixin, UsuarioSR, TipoVehiculoSR, EmptyStringAsNullMixin
 
 
 class PuestoSR(StatusSRMixin, serializers.ModelSerializer):
@@ -18,9 +18,12 @@ class PuestoSR(StatusSRMixin, serializers.ModelSerializer):
         fields = ("sede", "piso", "numero", "tipo_vehiculo")
 
 
-class TarifaSR(StatusSRMixin, serializers.ModelSerializer):
+class TarifaSR(StatusSRMixin, EmptyStringAsNullMixin, serializers.ModelSerializer):
+    negocio = serializers.PrimaryKeyRelatedField(
+        queryset=models.Negocio.objects.all(), write_only=True
+    )
     sede = serializers.PrimaryKeyRelatedField(
-        queryset=models.Sede.objects.all(), write_only=True
+        queryset=models.Sede.objects.all(), write_only=True, allow_null=True
     )
     piso = serializers.CharField(max_length=20, required=False, allow_null=True)
     numero = serializers.IntegerField(required=False, allow_null=True)
@@ -35,7 +38,7 @@ class TarifaSR(StatusSRMixin, serializers.ModelSerializer):
 
     class Meta:
         model = models.Tarifas
-        fields = ("sede", "piso", "numero", "tipo_vehiculo", "tiempo", "valor")
+        fields = ("negocio", "sede", "piso", "numero", "tipo_vehiculo", "tiempo", "valor")
 
 
 class ResenaSR(StatusSRMixin, serializers.ModelSerializer):

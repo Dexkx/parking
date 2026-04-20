@@ -8,9 +8,6 @@ class TipoVehiculo(ModelCoreType):
     value = False
 
     name = models.CharField(max_length=100, db_comment="Nombre")
-    llantas = models.IntegerField(
-        validators=(MinValueValidator(2),), db_comment="Llantas"
-    )
 
     class Meta:
         db_table = "tipos_vehiculos"

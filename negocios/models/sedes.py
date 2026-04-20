@@ -47,21 +47,18 @@ class Sede(ModelCore):
         blank=True,
         db_comment="Longitud GPS",
     )
-    creado_por = models.ForeignKey(Usuarios, related_name="dueno_sede", on_delete=models.PROTECT)
+    creado_por = models.ForeignKey(Usuarios, related_name="dueno_sedes", on_delete=models.PROTECT)
 
     class Meta:
         db_table = "sedes"
 
-    @property
+    @cached_property
     def puntuacion(self):
         """Puntuación promedio de las reseñas de esta sede."""
-        resenas = self.resenas.all()
-        if not resenas.exists():
-            return 0.0
-        return resenas.aggregate(p=models.Avg("puntuacion"))["p"]
+        return self.resenas.aggregate(p=models.Avg("puntuacion"))["p"] or 0.0
 
-    def __str__(self):
-        return f"{self.negocio.nombre} — {self.nombre}"
+    def is_owner(self, user):
+        return self.creado_por == user
 
 
 class ColaboradoresSede(ModelCore):
@@ -76,3 +73,11 @@ class ColaboradoresSede(ModelCore):
 
     class Meta:
         db_table = "colaboradores_sede"
+
+        constraints = [
+            models.UniqueConstraint(
+                condition=models.Q(tipo_colaborador='-1'),
+                fields=('sede', 'tipo_colaborador'),
+                name='unico_dueno_sede'
+            )
+        ]

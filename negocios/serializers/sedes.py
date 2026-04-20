@@ -11,6 +11,7 @@ from core.serializers import (
     TipoVehiculoSR,
     EmptyStringAsNullMixin,
 )
+from .negocios import NegocioSR
 
 
 class SedeSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer):
@@ -18,10 +19,13 @@ class SedeSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer)
 
     uuid = serializers.UUIDField(read_only=True)
     negocio = serializers.PrimaryKeyRelatedField(
-        queryset=models.Negocio.objects.all(), write_only=True
+        queryset=models.Negocio.objects.all()
     )
     puntuacion = serializers.FloatField(read_only=True)
+
     puestos_count = serializers.SerializerMethodField(read_only=True)
+    def get_puestos_count(self, obj):
+        return obj.puestos.activos().count()
 
     city = serializers.PrimaryKeyRelatedField(
         queryset=Cities.objects.all(), required=False
@@ -38,11 +42,9 @@ class SedeSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer)
         queryset=Usuarios.objects.all(), write_only=True
     )
 
-    def get_puestos_count(self, obj):
-        return obj.puestos.activos().count()
-
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        data["negocio"] = NegocioSR(instance.negocio).data
         data["city"] = CitySR(instance.city).data
         data["state"] = StateSR(instance.state).data
         data["country"] = CountrySR(instance.country).data
@@ -87,10 +89,8 @@ class ColaboradoresSedeSR(StatusSRMixin, serializers.ModelSerializer):
         return data
 
     def validate(self, attrs):
-        user = attrs.get("usuario")
         sede = attrs.get("sede")
-
-        if sede.is_owner(user):
+        if (user := attrs.get('usuario')) and sede.is_owner(user):
             raise serializers.ValidationError(
                 "El dueño no puede agregarse como colaborador"
             )

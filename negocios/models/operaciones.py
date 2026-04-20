@@ -36,8 +36,7 @@ class Puestos(ModelCore):
     class Meta:
         db_table = "puestos"
 
-    @cached_property
-    def tarifas(self):
+    def tarifas(self, only_activos=False):
         """
         Busca la tarifa aplicable en orden de especificidad:
         1. Tarifa para este puesto específico
@@ -45,12 +44,8 @@ class Puestos(ModelCore):
         3. Tarifa general de la sede
         """
         # 1. Tarifa específica del puesto
-        t = Tarifas.objects.filter(
-            sede=self.sede,
-            piso=self.piso,
-            numero=self.numero,
-            tipo_vehiculo=self.tipo_vehiculo,
-        ).activos()
+        t = self.tarifas_puesto
+        t = t.activos() if only_activos else t.all()
         if t.exists():
             return t
 
@@ -60,28 +55,29 @@ class Puestos(ModelCore):
             piso=self.piso,
             tipo_vehiculo=self.tipo_vehiculo,
             numero__isnull=True,
-        ).activos()
+        )
+        t = t.activos() if only_activos else t.all()
         if t.exists():
             return t
 
         # 3. Tarifa general de la sede
-        t = Tarifas.objects.filter(
-            sede=self.sede,
+        t = self.sede.tarifas.filter(
             tipo_vehiculo=self.tipo_vehiculo,
             piso__isnull=True,
             numero__isnull=True,
-        ).activos()
+        )
+        t = t.activos() if only_activos else t.all()
         if t.exists():
             return t
 
         # 4. Tarifa general del negocio
-        return Tarifas.objects.filter(
-            negocio=self.sede.negocio,
+        t = self.sede.negocio.tarifas.filter(
             sede__isnull=True,
             tipo_vehiculo=self.tipo_vehiculo,
             piso__isnull=True,
             numero__isnull=True,
-        ).activos()
+        )
+        return t.activos() if only_activos else t.all()
 
 
 class Tarifas(ModelCore):
@@ -174,8 +170,7 @@ class Resena(ModelCore):
 
 
 class Reserva(PostgresPartitionedModel, ModelCore):
-    pk = models.CompositePrimaryKey("uuid", "hf_inicio")
-    uuid = models.UUIDField(editable=False, default=uuid.uuid4, unique=True)
+    uuid = models.UUIDField(editable=False, primary_key=True, default=uuid.uuid4)
 
     negocio = models.ForeignKey(
         Negocio, related_name="reservas", on_delete=models.PROTECT

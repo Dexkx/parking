@@ -2,7 +2,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from core.views.mixins import NestedRouterModelMixin, NewCreatedModelMixin
 from .. import models
-from ..serializers import FranquiciasSR, ColaboradoresFranquiciaSR, NegociosFranquiciaSR
+from ..serializers import FranquiciasSR, ColaboradoresFranquiciaSR
 
 
 class FranquiciasViewSet(ModelViewSet):
@@ -23,23 +23,6 @@ class ColaboradoresFranquiciaViewSet(NestedRouterModelMixin, NewCreatedModelMixi
     queryset = models.ColaboradresFranquicia.objects.all()
     serializer_class = ColaboradoresFranquiciaSR
     lookup_field = "usuario"
-    permission_classes = (IsAuthenticated,)
-    nested_instances = [
-        {
-            'lookup': 'franquicia',
-            'field_name': 'franquicia_id',
-            'model_class': models.Franquicias,
-        }
-    ]
-
-
-class NegociosFranquiciaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
-    """
-    Asociación de negocios (parqueaderos) a una franquicia.
-    URL: /franquicias/{uuid}/negocios/
-    """
-    queryset = models.NegociosFranquicia.objects.all()
-    serializer_class = NegociosFranquiciaSR
     permission_classes = (IsAuthenticated,)
     nested_instances = [
         {

@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from .. import models
 from core.models import Usuarios
-from core.serializers import StatusSRMixin, TipoColaboradorSR, UsuarioSR, TipoVehiculoSR
+from core.serializers import StatusSRMixin, TipoColaboradorSR, UsuarioSR, TipoVehiculoSR, CitySR, EmptyStringAsNullMixin
+from .franquicias import FranquiciasSR
+from django.utils import timezone
 
-
-class NegocioSR(StatusSRMixin, serializers.ModelSerializer):
+class NegocioSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer):
     creado_por = serializers.PrimaryKeyRelatedField(
         queryset=Usuarios.objects.all(), write_only=True
     )
@@ -12,20 +13,27 @@ class NegocioSR(StatusSRMixin, serializers.ModelSerializer):
     numero_verificacion = serializers.IntegerField()
     razon_social = serializers.CharField(max_length=225)
     puntuacion = serializers.FloatField(read_only=True)
-    sedes_count = serializers.SerializerMethodField(read_only=True)
 
+    franquicia = serializers.PrimaryKeyRelatedField(
+        queryset=models.Franquicias.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+
+    reservas_hoy_count = serializers.SerializerMethodField(read_only=True)
+    def get_reservas_hoy_count(self, obj):
+        return obj.reservas.filter(hf_inicio__date=timezone.now().date()).count()
+
+    sedes_count = serializers.SerializerMethodField(read_only=True)
     def get_sedes_count(self, obj):
         return obj.sedes.activos().count()
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        # Incluir primera sede para el mapa (lat/lng)
-        primera_sede = instance.sedes.activos().first()
-        if primera_sede:
-            data['lat'] = float(primera_sede.lat) if primera_sede.lat else None
-            data['lng'] = float(primera_sede.lng) if primera_sede.lng else None
-            data['direccion'] = primera_sede.direccion
-            data['ciudad'] = CitySR(primera_sede.city).data
+
+        if instance.franquicia is not None:
+            data["franquicia"] = FranquiciasSR(instance.franquicia).data
+
         return data
 
     class Meta:
@@ -33,6 +41,7 @@ class NegocioSR(StatusSRMixin, serializers.ModelSerializer):
         fields = (
             "nit", "numero_verificacion", "razon_social",
             "nombre", "creado_por", "puntuacion", "sedes_count",
+            "franquicia", "reservas_hoy_count"
         )
 
 
@@ -53,10 +62,8 @@ class ColaboradoresNegocioSR(StatusSRMixin, serializers.ModelSerializer):
         return data
 
     def validate(self, attrs):
-        user = attrs.get('usuario')
         negocio = attrs.get('negocio')
-
-        if negocio.is_owner(user):
+        if (user := attrs.get('usuario')) and negocio.is_owner(user):
             raise serializers.ValidationError("El dueño no puede agregarse como colaborador")
 
         return super().validate(attrs)

@@ -9,7 +9,6 @@ router.register('franquicias', views.FranquiciasViewSet, basename='franquicias')
 # ── /franquicias/{uuid}/... ──────────────────────────────────────
 franquicias_router = NestedDefaultRouter(router, 'franquicias', lookup='franquicia', trailing_slash=False)
 franquicias_router.register('colaboradores', views.ColaboradoresFranquiciaViewSet, basename='franquicia-colaboradores')
-franquicias_router.register('negocios',      views.NegociosFranquiciaViewSet,      basename='franquicia-negocios')
 
 urlpatterns = [
     path('', include(router.urls)),

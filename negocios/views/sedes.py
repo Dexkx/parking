@@ -26,6 +26,9 @@ class SedeViewSet(ModelViewSet):
 
     queryset = models.Sede.objects.all()
     serializer_class = SedeSR
+    filterset_fields = {
+        "negocio": ("exact",)
+    }
 
     def get_permissions(self):
         if self.action in ("list", "retrieve"):

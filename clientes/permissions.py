@@ -25,7 +25,15 @@ class IsSede(BasePermission):
         if not user.is_authenticated:
             return False
 
-        sede_id = view.kwargs.get('pk')
+        # Intentamos obtener el ID de la sede desde los kwargs.
+        # 'sede_pk' para rutas anidadas, 'pk' para vistas de detalle directas.
+        sede_id = view.kwargs.get('sede_pk')
+        if not sede_id and getattr(view, 'detail', False):
+            sede_id = view.kwargs.get('pk')
+
+        # Si no hay un ID de sede involucrado en la URL, omitimos el chequeo.
+        if not sede_id:
+            return True
 
         return user.is_sede(sede_id) or user.is_dueno_sede(sede_id)
 

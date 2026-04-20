@@ -2,7 +2,6 @@ from django.core.validators import MinValueValidator
 from core.models import ModelCore, Usuarios, TipoColaborador
 from django.db import models
 import uuid
-from .negocio import Negocio
 
 class Franquicias(ModelCore):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -39,11 +38,12 @@ class ColaboradresFranquicia(ModelCore):
     class Meta:
         db_table = 'colaboradores_franquicia'
 
-class NegociosFranquicia(ModelCore):
-    pk = models.CompositePrimaryKey('franquicia_id', 'negocio_id')
-    franquicia = models.ForeignKey(Franquicias, related_name='negocios', on_delete=models.DO_NOTHING)
-    negocio = models.ForeignKey(Negocio, related_name='franquicias', on_delete=models.DO_NOTHING)
+        constraints = [
+            models.UniqueConstraint(
+                condition=models.Q(tipo_colaborador='-1'),
+                fields=('franquicia', 'tipo_colaborador'),
+                name='unico_dueno_franquicia'
+            )
+        ]
 
-    class Meta:
-        db_table = 'negocios_franquicia'
 

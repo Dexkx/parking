@@ -6,6 +6,7 @@ from core.models import (
     Usuarios,
     TipoColaborador,
 )
+from .franquicias import Franquicias
 
 
 class Negocio(ModelCore):
@@ -14,6 +15,12 @@ class Negocio(ModelCore):
     razon_social = models.CharField(max_length=225)
     nombre = models.CharField(
         max_length=120, db_comment="nombre para mostrar en la app"
+    )
+    franquicia = models.ForeignKey(
+        Franquicias, related_name="negocios", on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        default=None,
     )
     creado_por = models.ForeignKey(Usuarios, related_name="dueno_negocios", on_delete=models.PROTECT)
 
@@ -25,12 +32,9 @@ class Negocio(ModelCore):
             ),
         )
 
-    @property
+    @cached_property
     def puntuacion(self):
-        resenas = self.resenas.all()
-        if not resenas.exists():
-            return 0.0
-        return resenas.aggregate(puntuacion=models.Avg("puntuacion"))["puntuacion"]
+        return self.resenas.aggregate(p=models.Avg("puntuacion"))["p"] or 0.0
 
     def is_owner(self, user):
         return self.creado_por == user
@@ -48,3 +52,10 @@ class ColaboradoresNegocio(ModelCore):
     class Meta:
         db_table = "colaboradores_negocio"
 
+        constraints = [
+            models.UniqueConstraint(
+                condition=models.Q(tipo_colaborador='-1'),
+                fields=('negocio', 'tipo_colaborador'),
+                name='unico_dueno_negocio'
+            )
+        ]

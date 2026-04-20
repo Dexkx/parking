@@ -1,36 +1,57 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from core.views.mixins import NestedRouterModelMixin, NewCreatedModelMixin
-from clientes.permissions import IsCliente, IsNegocio
+from core.views.mixins import (
+    NestedRouterModelMixin,
+    NewCreatedModelMixin,
+    CompositeFKMixin,
+)
+from clientes.permissions import IsCliente, IsNegocio, IsSede
 from .. import models
 from ..serializers import ResenaSR, ReservaSR, PuestoSR, TarifaSR
 
 
-class PuestoNegocioViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
+class PuestoSedeViewSet(
+    NestedRouterModelMixin, CompositeFKMixin, NewCreatedModelMixin, ModelViewSet
+):
     """
     Puestos de una sede específica.
-    URL: /negocios/{nit}/sedes/{uuid}/puestos/
+    URL: /sedes/{uuid}/puestos/
     """
 
     queryset = models.Puestos.objects.all()
     serializer_class = PuestoSR
-    permission_classes = (IsNegocio,)
+    permission_classes = (IsSede,)
     nested_instances = [
-        {"lookup": "sede", "field_name": "sede_id", "model_class": models.Sede}
+        {"lookup": "sede", "field_name": "sede", "model_class": models.Sede}
     ]
 
+    url_params_required = (
+        {
+            "lookup": "piso",
+            "field_name": "piso",
+        },
+        {
+            "lookup": "numero",
+            "field_name": "numero",
+        },
+        {
+            "lookup": "tipo_vehiculo",
+            "field_name": "tipo_vehiculo",
+        },
+    )
 
-class TarifasNegocioViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
+
+class TarifasSedeViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
     """
     Tarifas de una sede.
-    URL: /negocios/{nit}/sedes/{uuid}/tarifas/
+    URL: /sedes/{uuid}/tarifas/
     """
 
     queryset = models.Tarifas.objects.all()
     serializer_class = TarifaSR
-    permission_classes = (IsNegocio,)
+    permission_classes = (IsSede,)
     nested_instances = [
-        {"lookup": "sede", "field_name": "sede_id", "model_class": models.Sede}
+        {"lookup": "sede", "field_name": "sede", "model_class": models.Sede}
     ]
 
 

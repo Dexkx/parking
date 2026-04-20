@@ -1,0 +1,58 @@
+[
+  {
+    "model": "core.tipovehiculo",
+    "fields": {
+      "name": "Automóvil"
+    }
+  },
+  {
+    "model": "core.tipovehiculo",
+    "fields": {
+      "name": "Motocicleta"
+    }
+  },
+  {
+    "model": "core.tipovehiculo",
+    "fields": {
+      "name": "Motocarro"
+    }
+  },
+  {
+    "model": "core.tipovehiculo",
+    "fields": {
+      "name": "Bus"
+    }
+  },
+  {
+    "model": "core.tipovehiculo",
+    "fields": {
+      "name": "Furgoneta"
+    }
+  },
+  {
+    "model": "core.tipovehiculo",
+    "fields": {
+      "name": "Camion liviano"
+    }
+  },
+  {
+    "model": "core.tipovehiculo",
+    "fields": {
+      "name": "Camion pesado"
+    }
+  },
+  {
+    "model": "core.tipovehiculo",
+    "fields": {
+      "name": "Bicicleta",
+      "status": "Inactivo"
+    }
+  },
+  {
+    "model": "core.tipovehiculo",
+    "fields": {
+      "name": "Triciclo",
+      "status": "Inactivo"
+    }
+  }
+]

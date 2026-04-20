@@ -13,11 +13,6 @@ negocios_router = NestedDefaultRouter(
 negocios_router.register(
     "colaboradores", views.ColaboradoresNegocioViewSet, basename="negocio-colaboradores"
 )
-negocios_router.register(
-    "sedes", views.SedeNegocioNestedViewSet, basename="negocio-sedes"
-)
-negocios_router.register("resenas", views.ResenaViewSet, basename="negocio-resenas")
-negocios_router.register("reservas", views.ReservaViewSet, basename="negocio-reservas")
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -16,8 +16,8 @@
     {
         "model": "core.tipocolaborador",
         "fields": {
-            "descripcion": "Trabajador",
+            "descripcion": "Empleado",
             "code": "1"
-        }   
+        }
     }
 ]
