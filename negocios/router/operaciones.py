@@ -3,7 +3,7 @@ from .. import views
 from .sedes import sedes_router
 from .negocio import negocios_router
 
-negocios_router.register("tarifas", views.TarifasSedeViewSet, basename="sede-tarifas")
+negocios_router.register("tarifas", views.TarifasNegocioViewSet, basename="negocio-tarifas")
 
 sedes_router.register("puestos", views.PuestoSedeViewSet, basename="sede-puestos")
 sedes_router.register("tarifas", views.TarifasSedeViewSet, basename="sede-tarifas")

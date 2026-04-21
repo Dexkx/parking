@@ -74,7 +74,7 @@ class Usuarios(AbstractUser, ModelCore):
         return self.sedes.filter(sede=uuid).activos().exists()
 
     def is_dueno_sede(self, uuid):
-        return self.dueno_sedes.filter(sede=uuid).activos().exists()
+        return self.dueno_sedes.filter(uuid=uuid).activos().exists()
 
     def is_negocio(self, nit):
         return self.negocios.filter(negocio=nit).activos().exists()

@@ -19,11 +19,13 @@ class PuestoSR(StatusSRMixin, serializers.ModelSerializer):
 
 
 class TarifaSR(StatusSRMixin, EmptyStringAsNullMixin, serializers.ModelSerializer):
+    uuid = serializers.UUIDField(read_only=True)
+
     negocio = serializers.PrimaryKeyRelatedField(
         queryset=models.Negocio.objects.all(), write_only=True
     )
     sede = serializers.PrimaryKeyRelatedField(
-        queryset=models.Sede.objects.all(), write_only=True, allow_null=True
+        queryset=models.Sede.objects.all(), write_only=True, allow_null=True, required=False,
     )
     piso = serializers.CharField(max_length=20, required=False, allow_null=True)
     numero = serializers.IntegerField(required=False, allow_null=True)
@@ -38,7 +40,7 @@ class TarifaSR(StatusSRMixin, EmptyStringAsNullMixin, serializers.ModelSerialize
 
     class Meta:
         model = models.Tarifas
-        fields = ("negocio", "sede", "piso", "numero", "tipo_vehiculo", "tiempo", "valor")
+        fields = ("uuid", "negocio", "sede", "piso", "numero", "tipo_vehiculo", "tiempo", "valor")
 
 
 class ResenaSR(StatusSRMixin, serializers.ModelSerializer):

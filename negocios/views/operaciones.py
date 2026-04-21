@@ -40,7 +40,6 @@ class PuestoSedeViewSet(
         },
     )
 
-
 class TarifasSedeViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
     """
     Tarifas de una sede.
@@ -53,6 +52,27 @@ class TarifasSedeViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelView
     nested_instances = [
         {"lookup": "sede", "field_name": "sede", "model_class": models.Sede}
     ]
+
+class TarifasNegocioViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
+    """
+    Tarifas de un negocio.
+    URL: /negocios/{nit}/tarifas/
+    """
+
+    queryset = models.Tarifas.objects.all()
+    serializer_class = TarifaSR
+    permission_classes = (IsNegocio,)
+    nested_instances = [
+        {"lookup": "negocio", "field_name": "negocio", "model_class": models.Negocio}
+    ]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(
+            sede__isnull=True,
+            piso__isnull=True,
+            numero__isnull=True,
+        )
 
 
 class ResenaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):

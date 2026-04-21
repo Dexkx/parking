@@ -28,7 +28,7 @@ class SedeSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer)
         return obj.puestos.activos().count()
 
     city = serializers.PrimaryKeyRelatedField(
-        queryset=Cities.objects.all(), required=False
+        queryset=Cities.objects.all(), required=False, allow_null=True
     )
 
     lat = serializers.DecimalField(
