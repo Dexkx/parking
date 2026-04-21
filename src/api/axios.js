@@ -73,6 +73,13 @@ export const negociosApi = {
   editColaborador:     (nit, uid, d)=> api.patch(`/negocios/${nit}/colaboradores/${uid}`, d),
   removeColaborador:   (nit, uid)   => api.delete(`/negocios/${nit}/colaboradores/${uid}`),
 }
+// ── Tarifas ───────────────────────────────────────────────────
+export const tarifasNegocioApi = {
+  list:   (nit)         => api.get(`/negocios/${nit}/tarifas`),
+  create: (nit, d)      => api.post(`/negocios/${nit}/tarifas`, d),
+  update: (nit, pk, d)  => api.patch(`/negocios/${nit}/tarifas/${pk}`, d),
+  editStatus: (nit, pk, newStatus) => api.patch(`/negocios/${nit}/tarifas/${pk}`, { 'status': newStatus }),
+}
 
 // ── Sedes ─────────────────────────────────────────────────────
 export const sedesApi = {
@@ -93,7 +100,7 @@ export const puestosSedeApi = {
   list:   (sid)         => api.get(`/sedes/${sid}/puestos`),
   create: (sid, d)      => api.post(`/sedes/${sid}/puestos`, d),
   update: (sid, pk, d)  => api.patch(`/sedes/${sid}/puestos/${pk}`, d),
-  remove: (sid, piso, numero, tipo_vehiculo)     => api.delete(`/sedes/${sid}/puestos/${piso}/${numero}/${tipo_vehiculo}`),
+  editStatus: (sid, piso, numero, tipo_vehiculo, newStatus) => api.patch(`/sedes/${sid}/puestos/${piso}/${numero}/${tipo_vehiculo}`, { 'status': newStatus }),
 }
 
 // ── Tarifas ───────────────────────────────────────────────────
@@ -101,7 +108,7 @@ export const tarifasSedeApi = {
   list:   (sid)         => api.get(`/sedes/${sid}/tarifas`),
   create: (sid, d)      => api.post(`/sedes/${sid}/tarifas`, d),
   update: (sid, pk, d)  => api.patch(`/sedes/${sid}/tarifas/${pk}`, d),
-  remove: (sid, pk)     => api.delete(`/sedes/${sid}/tarifas/${pk}`),
+  editStatus: (sid, pk, newStatus) => api.patch(`/sedes/${sid}/tarifas/${pk}`, { 'status': newStatus }),
 }
 
 // ── Clientes ──────────────────────────────────────────────────

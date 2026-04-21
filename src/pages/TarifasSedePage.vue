@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Plus, Trash2, ArrowLeft, DollarSign, Clock } from 'lucide-vue-next'
+import { Plus, Trash2, ArrowLeft, DollarSign, Clock, ThumbsUp, ThumbsDown } from 'lucide-vue-next'
 import CrudModal from '@/components/CrudModal.vue'
 import { tarifasSedeApi, sedesApi, catalogosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
@@ -36,7 +36,6 @@ onMounted(async () => {
   ])
   const sedes = sedeRes.data?.results ?? sedeRes.data ?? []
   sede.value    = sedes.find(s => s.uuid === sedeId) ?? null
-  console.log(sede.value)
   items.value   = tarifasRes.data?.results ?? tarifasRes.data ?? []
   tiposVeh.value = tvRes.data?.results ?? tvRes.data ?? []
   loading.value = false
@@ -59,7 +58,6 @@ function buildTiempo() {
 async function handleSubmit() {
   saving.value = true
   try {
-    console.log(form.value)
     await tarifasSedeApi.create(sedeId, { ...form.value, tiempo: buildTiempo() })
     toast.success('Tarifa creada')
     closeModal()
@@ -70,13 +68,19 @@ async function handleSubmit() {
   } finally { saving.value = false }
 }
 
-async function handleDelete(item) {
-  if (!confirm('¿Eliminar esta tarifa?')) return
+// ── Eliminar ───────────────────────────────────────
+async function editStatus(item) {
+  const accion = item.status === 'Activo' ? 'Desactivar' : 'Activar'
+  if (!confirm(`¿${accion} la tarifa "${item.tipo_vehiculo?.name}"?`)) return
+
   try {
-    await tarifasSedeApi.remove(sedeId, `${item.tipo_vehiculo_id}-${item.tiempo}`)
-    toast.success('Tarifa eliminada')
-    items.value = items.value.filter(t => !(t.tipo_vehiculo_id === item.tipo_vehiculo_id && t.tiempo === item.tiempo))
-  } catch { toast.error('No se pudo eliminar') }
+    const res = await tarifasSedeApi.editStatus(sedeId, item.uuid, item.status === 'Activo' ? 'Inactivo' : 'Activo')
+    toast.success(`Tarifa ${res.data?.status}`)
+
+    const found = items.value.find(n => n.uuid === item.uuid)
+    if (found) found.status = res.data?.status
+
+  } catch { toast.error('No se pudo cambiar el estado') }
 }
 
 // Formatear duración legible
@@ -147,43 +151,61 @@ const alcance = (t) => {
       <p class="text-sm text-t-secondary">Crea al menos una tarifa general para esta sede.</p>
     </div>
 
-    <!-- Tabla de tarifas -->
-    <div v-else class="card-dark rounded-lg overflow-hidden">
-      <!-- Header -->
-      <div class="table-row grid-cols-[1.5fr_1fr_1fr_1.5fr_80px] bg-surface/50">
-        <div class="table-head-cell">Tipo vehículo</div>
-        <div class="table-head-cell">Duración</div>
-        <div class="table-head-cell">Valor (COP)</div>
-        <div class="table-head-cell">Alcance</div>
-        <div class="table-head-cell justify-end">Acción</div>
-      </div>
-
+    <!-- Tabla de tarifas → Grid de tarjetas -->
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div v-for="t in items" :key="`${t.tipo_vehiculo_id}-${t.tiempo}`"
-           class="table-row grid-cols-[1.5fr_1fr_1fr_1.5fr_80px]">
-        <div class="table-cell gap-2">
-          <div class="w-6 h-6 rounded bg-accent/10 flex items-center justify-center">
-            <DollarSign :size="12" class="text-accent" />
+           class="card-dark rounded-lg overflow-hidden hover:border-border-hover transition-all animate-fade-up"
+          :class="{ '!opacity-60': t.status !== 'Activo' }">
+
+          <!-- Top -->
+        <div class="flex items-start justify-between p-4 pb-3">
+          <div class="flex items-start gap-3 flex-1 min-w-0">
+            <div class="w-9 h-9 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+              <DollarSign :size="16" class="text-accent" />
+            </div>
+            <div class="min-w-0">
+              <div class="font-head font-bold text-t-primary text-sm leading-tight truncate">
+                {{ t.tipo_vehiculo?.name ?? t.tipo_vehiculo }}
+              </div>
+              <div class="font-mono text-[11px] text-t-muted mt-0.5">ID: {{ t.uuid }}</div>
+            </div>
           </div>
-          <span class="font-medium">{{ t.tipo_vehiculo?.name ?? t.tipo_vehiculo }}</span>
-        </div>
-        <div class="table-cell">
-          <div class="flex items-center gap-1 text-t-secondary">
-            <Clock :size="12" /> {{ fmtTiempo(t.tiempo) }}
-          </div>
-        </div>
-        <div class="table-cell font-head font-bold text-accent">
-          ${{ Number(t.valor).toLocaleString('es-CO') }}
-        </div>
-        <div class="table-cell">
           <span :class="[
             !t.piso && !t.numero ? 'badge-green' :
             !t.numero ? 'badge-blue' : 'badge-purple'
-          ]">{{ alcance(t) }}</span>
+          ]" class="shrink-0 ml-2">
+            {{ alcance(t) }}
+          </span>
         </div>
-        <div class="table-cell justify-end">
-          <button class="btn-icon w-7 h-7 hover:text-danger hover:border-danger/30" @click="handleDelete(t)">
-            <Trash2 :size="13" />
-          </button>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 gap-px bg-border mx-4 rounded-sm overflow-hidden mb-3">
+          <div class="bg-input px-3 py-2 text-center">
+            <div class="text-[10px] text-t-muted uppercase tracking-wider mb-0.5">Duración</div>
+            <div class="font-head font-bold text-accent text-sm flex items-center justify-center gap-1">
+              <Clock :size="12" /> {{ fmtTiempo(t.tiempo) }}
+            </div>
+          </div>
+          <div class="bg-input px-3 py-2 text-center">
+            <div class="text-[10px] text-t-muted uppercase tracking-wider mb-0.5">Valor (COP)</div>
+            <div class="font-head font-bold text-t-primary text-sm">
+              ${{ Number(t.valor).toLocaleString('es-CO') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer acciones -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-surface/30">
+          <div class="flex gap-1">
+            <button class="btn-icon w-7 h-7" :class="{
+              'hover:text-danger hover:border-danger/30': t.status === 'Activo',
+              'hover:text-accent hover:border-accent/30': t.status === 'Inactivo',
+              }" :title="t.status === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(t)">
+              <ThumbsUp :size="12" v-if="t.status === 'Inactivo'" />
+              <ThumbsDown :size="12" v-else />
+            </button>
+          </div>
+          <div class="text-[10px] text-t-muted font-mono uppercase">{{ t.status }}</div>
         </div>
       </div>
     </div>

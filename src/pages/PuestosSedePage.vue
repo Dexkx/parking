@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Plus, Trash2, ArrowLeft, LandPlot, DollarSign, Layers, MapPin } from 'lucide-vue-next'
+import { Plus, Trash2, ArrowLeft, LandPlot, DollarSign, Layers, MapPin, Check, X } from 'lucide-vue-next'
 import CrudModal from '@/components/CrudModal.vue'
 import { puestosSedeApi, sedesApi, catalogosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
@@ -68,13 +68,15 @@ async function handleSubmit() {
   } finally { saving.value = false }
 }
 
-async function handleDelete(p) {
-  if (!confirm(`¿Eliminar el puesto #${p.numero} del piso ${p.piso}?`)) return
+async function editStatus(item) {
+  const accion = item.status === 'Activo' ? 'Desactivar' : 'Activar'
+  if (!confirm(`¿${accion} el puesto "${item.numero}" del piso "${item.piso}"?`)) return
   try {
-    await puestosSedeApi.remove(sedeId, p.piso, p.numero, p.tipo_vehiculo.id)
-    toast.success('Puesto eliminado')
-    puestos.value = puestos.value.filter(x => !(x.piso === p.piso && x.numero === p.numero && x.tipo_vehiculo.id === p.tipo_vehiculo.id))
-  } catch { toast.error('No se pudo eliminar') }
+    const res = await puestosSedeApi.editStatus(sede.value.uuid, item.piso, item.numero, item.tipo_vehiculo.id, item.status === 'Activo' ? 'Inactivo' : 'Activo')
+    toast.success(`Puesto ${res.data?.status}`)
+    const found = puestos.value.find(n => n.piso === item.piso && n.numero === item.numero && n.tipo_vehiculo.id === item.tipo_vehiculo.id)
+    if (found) found.status = res.data?.status
+  } catch { toast.error('No se pudo cambiar el estado') }
 }
 
 const irTarifas = () => router.push({ name: 'tarifas', params: { sede: sedeId } })
@@ -155,16 +157,21 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { sede: sedeId } 
           <!-- Grid de puestos como casillas visuales -->
           <div class="p-4 grid grid-cols-5 md:grid-cols-8 gap-2">
             <div v-for="p in puestosDelPiso" :key="`${p.piso}-${p.numero}`"
-                 class="group relative bg-input border border-border rounded-sm p-2 text-center hover:border-border-hover transition-all">
+                 class="group relative bg-input border border-border rounded-sm p-2 text-center hover:border-border-hover transition-all"
+                 :class="{ '!bg-red-500/10': p.status === 'Inactivo' }">
               <div class="font-head font-bold text-t-primary text-sm">#{{ p.numero }}</div>
               <div class="text-[10px] text-t-muted mt-0.5 truncate">{{ p.tipo_vehiculo?.name ?? '—' }}</div>
               <span :class="p.status === 'Activo' ? 'badge-green' : 'badge-red'" class="mt-1">
                 {{ p.status === 'Activo' ? 'Libre' : 'Inact.' }}
               </span>
-              <!-- Btn eliminar al hover -->
-              <button class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-danger flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      @click="handleDelete(p)">
-                <span class="text-white text-[10px] leading-none">×</span>
+              <!-- Btn desactivar/activar  al hover -->
+              <button class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      @click="editStatus(p)" :class="{ 'bg-danger': p.status === 'Activo', 'bg-accent': p.status === 'Inactivo' }"
+                      :title="p.status === 'Activo' ? 'Desactivar' : 'Activar'">
+
+                <X v-if="p.status === 'Activo'" :size="12" class="text-white" />
+                <Check v-else :size="12" class="text-white" />
+                <!-- <span class="text-white text-[10px] leading-none">{{ p.status === 'Activo' ? '×' : '✓' }}</span> -->
               </button>
             </div>
 

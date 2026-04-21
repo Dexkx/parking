@@ -18,13 +18,10 @@ export function useGeocoder() {
   const geocoding = ref(false)   // true mientras carga
   const error = ref(null)    // mensaje de error si falla
 
-  async function geocodificar(direccion, city, state) {
+  async function geocodificar(direccion, city, state, country) {
     if (!direccion?.trim()) return null
 
-    const query = [direccion.trim(), city, state].filter(Boolean).join(', ')
-
-    // Revisar caché
-    // if (cache.has(query)) return cache.get(query)
+    const query = [direccion.trim(), city, state, country].filter(Boolean).join(', ')
 
     geocoding.value = true
     error.value     = null

@@ -9,10 +9,11 @@ const NegociosPage                 = () => import('@/pages/NegociosPage.vue')
 const ColaboradoresNegocioPage     = () => import('@/pages/ColaboradoresNegocioPage.vue')
 const SedesGeneralPage             = () => import('@/pages/SedesGeneralPage.vue')   // ← menú sidebar
 const ColaboradoresSedePage        = () => import('@/pages/ColaboradoresSedePage.vue')
-const PuestosPage                  = () => import('@/pages/PuestosPage.vue')
-const TarifasPage                  = () => import('@/pages/TarifasPage.vue')
+const PuestosSedePage                  = () => import('@/pages/PuestosSedePage.vue')
+const TarifasSedePage                  = () => import('@/pages/TarifasSedePage.vue')
 const ClientesPage                 = () => import('@/pages/ClientesPage.vue')
 const ReservasPage                 = () => import('@/pages/ReservasPage.vue')
+const TarifasNegocioPage           = () => import('@/pages/TarifasNegocio.vue')
 
 const routes = [
   { path: '/login', name: 'login', component: LoginPage, meta: { public: true } },
@@ -47,6 +48,12 @@ const routes = [
     component: ColaboradoresNegocioPage,
     meta: { requiresAuth: true },
   },
+  {
+    path: '/negocios/:nit/tarifas',
+    name: 'tarifas-negocio',
+    component: TarifasNegocioPage,
+    meta: { requiresAuth: true },
+  },
 
   // ── Sedes (menú sidebar) ───────────────────────────────────
   {
@@ -67,7 +74,7 @@ const routes = [
   {
     path: '/sedes/:sede/puestos',
     name: 'puestos',
-    component: PuestosPage,
+    component: PuestosSedePage,
     meta: { requiresAuth: true },
   },
 
@@ -75,13 +82,13 @@ const routes = [
   {
     path: '/negocios/:nit/sedes/:sede/tarifas',
     name: 'tarifas',
-    component: TarifasPage,
+    component: TarifasSedePage,
     meta: { requiresAuth: true },
   },
   {
     path: '/sedes/:sede/tarifas',
     name: 'tarifas',
-    component: TarifasPage,
+    component: TarifasSedePage,
     meta: { requiresAuth: true },
   },
 

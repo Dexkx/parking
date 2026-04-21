@@ -108,14 +108,15 @@ async function getCities() {
 // ── Geocodificación ────────────────────────────────
 async function handleDireccion() {
   askingLocates.value = true
-  if (!form.value.direccion?.trim() || !form.value.city || !form.value.state) {
+  if (!form.value.direccion?.trim() || !form.value.state || !form.value.country) {
     askingLocates.value = false
     return
   }
 
   const cityNombre = ciudades.value.find(c => c.id === form.value.city)?.name ?? ''
   const stateNombre = deptos.value.find(d => d.id === form.value.state)?.name ?? ''
-  const coords = await geocodificar(form.value.direccion, cityNombre, stateNombre)
+  const countryNombre = paises.value.find(c => c.id === form.value.country)?.name ?? ''
+  const coords = await geocodificar(form.value.direccion, cityNombre, stateNombre, countryNombre)
 
   if (coords.length === 0) toast.warning('No se encontraron coordenadas. La sede se guardará sin GPS.')
 
@@ -365,7 +366,7 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-sede', para
         <label class="label-dark">DIRECCIÓN</label>
         <div class="relative">
           <input class="input-dark pr-10" v-model="form.direccion" placeholder="Calle 26 # 13-20" required
-            @blur="handleDireccion" />
+            @blur="handleDireccion" @change="handleDireccion" />
         </div>
         <div v-if="hasCoords" class="mt-1.5 ml-3 flex items-center gap-1.5 text-xs text-blue">
           <MapPin :size="15" />
@@ -399,7 +400,7 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-sede', para
       </div>
 
       <div>
-        <select class="input-dark" v-model="form.negocio" required>
+        <select class="input-dark" v-model="form.negocio">
           <option value="">Selecciona un negocio</option>
           <option v-for="n in negocios" :key="n.nit" :value="n.nit">
             {{ n.nombre }} · NIT {{ n.nit }}

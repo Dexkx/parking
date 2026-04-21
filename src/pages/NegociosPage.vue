@@ -11,7 +11,7 @@
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Plus, Pencil, ThumbsDown, ThumbsUp, ParkingCircle, MapPin, ChevronRight, Users, Building2 } from 'lucide-vue-next'
+import { Plus, Pencil, ThumbsDown, ThumbsUp, ParkingCircle, MapPin, ChevronRight, Users, Building2, DollarSign } from 'lucide-vue-next'
 import CrudModal from '@/components/CrudModal.vue'
 import { negociosApi, franquiciasApi } from '@/api/axios'
 import { useAuthStore } from '@/stores/auth'
@@ -101,6 +101,7 @@ async function editStatus(item) {
 // Sedes → va a la página general de sedes filtrada por este negocio
 const irSedes         = (nit) => router.push({ name: 'sedes-general', query: { negocio: nit } })
 const irColaboradores = (nit) => router.push({ name: 'colaboradores-negocio', params: { nit } })
+const irTarifas       = (nit) => router.push({ name: 'tarifas-negocio', params: { nit } })
 </script>
 
 <template>
@@ -166,9 +167,15 @@ const irColaboradores = (nit) => router.push({ name: 'colaboradores-negocio', pa
               <div class="font-mono text-[11px] text-t-muted mt-0.5">NIT {{ n.nit }}-{{ n.numero_verificacion }}</div>
             </div>
           </div>
-          <span :class="n.status === 'Activo' ? 'badge-green' : 'badge-red'" class="shrink-0 ml-2">
-            {{ n.status }}
-          </span>
+          <div class="flex items-center gap-2 shrink-0 ml-2">
+            <button class="btn-ghost px-2 py-0.5 text-[11px] h-6" title="Tarifas generales"
+                    @click="irTarifas(n.nit)">
+              <DollarSign :size="12" /> Tarifas
+            </button>
+            <span :class="n.status === 'Activo' ? 'badge-green' : 'badge-red'" class="text-[10px] uppercase font-bold shrink-0">
+              {{ n.status }}
+            </span>
+          </div>
         </div>
 
         <!-- Stats: solo Sedes y Puntuación (sin Ciudad) -->
