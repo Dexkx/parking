@@ -13,9 +13,9 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { negociosApi } from '@/api/axios'
+import { sedesApi } from '@/api/axios'
 
-export const useNegociosStore = defineStore('negocios', () => {
+export const useSedesStore = defineStore('sedes', () => {
   // ── Estado ──────────────────────────────────────
   const items   = ref([])
   const detalle = ref(null)
@@ -32,14 +32,14 @@ export const useNegociosStore = defineStore('negocios', () => {
    * Obtiene la lista de negocios desde /api/negocios
    * @param {Object} params - Filtros opcionales: search, status, ciudad, etc.
    */
-  async function fetchNegocios(params = {}) {
+  async function fetchSedes(params = {}) {
     loading.value = true
     error.value   = null
     try {
-      const res = await negociosApi.list(params)
+      const res = await sedesApi.list(params)
       items.value = res.data?.results ?? res.data ?? []
     } catch (e) {
-      error.value = 'No se pudieron cargar los parqueaderos.'
+      error.value = 'No se pudieron cargar las sedes.'
       items.value = []
     } finally {
       loading.value = false
@@ -47,8 +47,8 @@ export const useNegociosStore = defineStore('negocios', () => {
   }
 
   /**
-   * Obtiene el detalle de un negocio por NIT
-   * @param {string} nit
+   * Obtiene el detalle de una sede por id
+   * @param {string} id
    */
   async function fetchDetalle(nit) {
     loading.value = true
@@ -62,5 +62,5 @@ export const useNegociosStore = defineStore('negocios', () => {
     }
   }
 
-  return { items, detalle, loading, error, disponibles, total, fetchNegocios, fetchDetalle }
+  return { items, detalle, loading, error, disponibles, total, fetchSedes, fetchDetalle }
 })

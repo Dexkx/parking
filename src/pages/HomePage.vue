@@ -104,13 +104,13 @@ import { ref, onMounted, Fragment } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search, MapPin, Zap, Shield, Star } from 'lucide-vue-next'
 import MapView from '@/components/MapView.vue'
-import { useNegociosStore } from '@/stores/negocios'
+import { useSedesStore } from '@/stores/sedes'
 
 const router = useRouter()
-const store = useNegociosStore()
+const store = useSedesStore()
 const query = ref('')
 
-onMounted(() => store.fetchNegocios())
+onMounted(() => store.fetchSedes())
 
 const features = [
   {

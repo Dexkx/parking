@@ -16,6 +16,7 @@ api.interceptors.request.use(cfg => {
 api.interceptors.response.use(
   res => res,
   async err => {
+    console.log(err.response)
     const original = err.config
     if (err.response?.status === 401 && !original._retry) {
       original._retry = true
@@ -53,28 +54,28 @@ export const authApi = {
   me: (id)                => api.get(`/usuarios/${id}`),
 }
 
-export const negociosApi = {
-  /** GET  /api/negocios?search=&status= */
-  list: (params = {})     => api.get('/negocios', { params }),
-  /** GET  /api/negocios/:nit */
-  detail: (nit)           => api.get(`/negocios/${nit}`),
-  /** GET  /api/negocios/:nit/resenas */
-  resenas: (nit)          => api.get(`/negocios/${nit}/resenas`),
-  /** POST /api/negocios/:nit/resenas */
-  crearResena: (nit, d)   => api.post(`/negocios/${nit}/resenas`, d),
-  /** GET  /api/negocios/:nit/tarifas */
-  tarifas: (nit)          => api.get(`/negocios/${nit}/tarifas`),
-  /** GET  /api/negocios/:nit/puestos */
-  puestos: (nit)          => api.get(`/negocios/${nit}/puestos`),
+export const sedesApi = {
+  /** GET  /api/sedes?search=&status= */
+  list: (params = {})     => api.get('/sedes-publicas', { params }),
+  /** GET  /api/sedes/:id */
+  detail: (id)           => api.get(`/sedes-publicas/${id}`),
+  /** GET  /api/sedes/:id/resenas */
+  resenas: (id)          => api.get(`/sedes-publicas/${id}/resenas`),
+  /** POST /api/sedes/:id/resenas */
+  crearResena: (id, d)   => api.post(`/sedes/${id}/resenas`, d),
+  /** GET  /api/sedes/:id/tarifas */
+  tarifas: (id)          => api.get(`/sedes-publicas/${id}/tarifas`),
+  /** GET  /api/sedes/:id/puestos */
+  puestos: (id)          => api.get(`/sedes-publicas/${id}/puestos`),
 }
 
 export const reservasApi = {
-  /** GET  /api/negocios/:nit/reservas */
-  mis: (nit)              => api.get(`/negocios/${nit}/reservas`),
-  /** POST /api/negocios/:nit/reservas */
-  crear: (nit, d)         => api.post(`/negocios/${nit}/reservas`, d),
-  /** DELETE /api/negocios/:nit/reservas/:uuid */
-  cancelar: (nit, uuid)   => api.delete(`/negocios/${nit}/reservas/${uuid}`),
+  /** GET  /api/sedes/:uuid/reservas */
+  mis: (uuid)              => api.get(`/sedes/${uuid}/reservas`),
+  /** POST /api/sedes/:uuid/reservas */
+  crear: (uuid, d)         => api.post(`/sedes/${uuid}/reservas`, d),
+  /** DELETE /api/sedes/:uuid/reservas/:uuid */
+  cancelar: (uuid, r_uuid)   => api.delete(`/sedes/${uuid}/reservas/${r_uuid}`),
 }
 
 export const vehiculosApi = {

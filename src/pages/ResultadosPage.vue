@@ -60,9 +60,9 @@
         <template v-else>
           <div class="flex flex-col gap-3 pt-1">
             <ParkCard
-              v-for="(neg, i) in negociosFiltrados"
-              :key="neg.nit"
-              :negocio="neg"
+              v-for="(sed, i) in negociosFiltrados"
+              :key="sed.uuid"
+              :sede="sed"
               :index="i"
               @login-required="$emit('login-required')"
             />
@@ -96,11 +96,11 @@ import { useRoute } from 'vue-router'
 import { Search, Loader2, SlidersHorizontal } from 'lucide-vue-next'
 import ParkCard from '@/components/ParkCard.vue'
 import MapView from '@/components/MapView.vue'
-import { useNegociosStore } from '@/stores/negocios'
+import { useSedesStore } from '@/stores/sedes'
 
 const emit  = defineEmits(['login-required'])
 const route = useRoute()
-const store = useNegociosStore()
+const store = useSedesStore()
 
 // ── Filtros ────────────────────────────────────────
 const query       = ref(route.query.q ?? '')
@@ -134,7 +134,7 @@ onMounted(() => cargar(query.value))
 async function cargar(q = '') {
   const params = {}
   if (q) params.search = q
-  await store.fetchNegocios(params)
+  await store.fetchSedes(params)
 }
 </script>
 

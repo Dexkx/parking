@@ -7,11 +7,11 @@
     <div class="flex justify-between items-start p-4 pb-0">
       <div class="flex-1 min-w-0 pr-3">
         <h3 class="font-head font-bold text-[15px] leading-tight text-t-primary truncate">
-          {{ negocio.nombre }}
+          {{ sede.nombre }}
         </h3>
         <p class="flex items-center gap-1 text-xs text-t-secondary mt-1">
           <MapPin :size="10" class="text-accent shrink-0" />
-          <span class="truncate">{{ negocio.direccion }}</span>
+          <span class="truncate">{{ sede.direccion }}</span>
         </p>
       </div>
 
@@ -33,11 +33,11 @@
       </div>
       <div class="bg-input rounded-sm p-2.5">
         <div class="text-[10px] text-t-muted font-medium tracking-wider uppercase mb-1">Puestos</div>
-        <div class="font-head font-bold text-base text-t-primary">{{ negocio.puestos_count ?? '—' }}</div>
+        <div class="font-head font-bold text-base text-t-primary">{{ sede.puestos_count ?? '—' }}</div>
       </div>
       <div class="bg-input rounded-sm p-2.5">
         <div class="text-[10px] text-t-muted font-medium tracking-wider uppercase mb-1">Ciudad</div>
-        <div class="text-sm font-medium text-t-secondary truncate">{{ negocio.city?.name ?? '—' }}</div>
+        <div class="text-sm font-medium text-t-secondary truncate">{{ sede.city?.name ?? '—' }}</div>
       </div>
     </div>
 
@@ -83,7 +83,7 @@ import { useSwal } from '@/composables/useSwal'
 import { useToast } from 'vue-toastification'
 
 const props = defineProps({
-  negocio: { type: Object, required: true },
+  sede: { type: Object, required: true },
   index:   { type: Number, default: 0 },
 })
 const emit = defineEmits(['login-required'])
@@ -93,11 +93,11 @@ const toast = useToast()
 const { promptReserva } = useSwal()
 
 // ── Computed ──────────────────────────────
-const disponible  = computed(() => props.negocio.status === 'Activo')
-const precioBase  = computed(() => props.negocio.tarifas?.[0]?.valor
-  ? `$${Number(props.negocio.tarifas[0].valor).toLocaleString('es-CO')}/h`
+const disponible  = computed(() => props.sede.status === 'Activo')
+const precioBase  = computed(() => props.sede.tarifas?.[0]?.valor
+  ? `$${Number(props.sede.tarifas[0].valor).toLocaleString('es-CO')}/h`
   : '—')
-const puntuacion  = computed(() => Number(props.negocio.puntuacion ?? 0))
+const puntuacion  = computed(() => Number(props.sede.puntuacion ?? 0))
 const estrellas   = computed(() => Math.round(puntuacion.value))
 const animDelay   = computed(() => `${props.index * 70}ms`)
 
@@ -106,7 +106,7 @@ async function reservar() {
   if (!auth.isAuthenticated) { emit('login-required'); return }
   if (!disponible.value) { toast.warning('Este parqueadero no está disponible en este momento'); return }
 
-  const result = await promptReserva(props.negocio)
+  const result = await promptReserva(props.sede)
   if (!result) return  // usuario canceló
 
   try {
@@ -114,17 +114,18 @@ async function reservar() {
     const [h, m, s] = result.tiempo.split(':').map(Number)
     const end = new Date(now.getTime() + (h * 3600 + m * 60 + s) * 1000)
 
-    await reservasApi.crear(props.negocio.nit, {
+    await reservasApi.crear(props.sede.uuid, {
+      negocio:      props.sede.negocio.nit,
       piso:         '1',
       numero:       1,
-      tipo_vehiculo: 1,
+      tipo_vehiculo: 3,
       tiempo:       result.tiempo,
       placa:        result.placa,
       hf_inicio:    now.toISOString(),
       hf_final:     end.toISOString(),
     })
 
-    toast.success(`¡Reserva en ${props.negocio.nombre} confirmada!`)
+    toast.success(`¡Reserva en ${props.sede.nombre} confirmada!`)
   } catch {
     toast.error('No se pudo crear la reserva. Intenta de nuevo.')
   }
