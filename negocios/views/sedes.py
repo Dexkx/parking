@@ -1,4 +1,4 @@
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import AllowAny
 from core.views.mixins import NestedRouterModelMixin, NewCreatedModelMixin
 from clientes.permissions import IsNegocio, IsSede
@@ -14,6 +14,42 @@ from ..serializers import (
 from rest_condition import Or
 
 
+class SedePublicViewSet(ReadOnlyModelViewSet):
+    """
+    Endpoint público para descubrimiento de sedes.
+    URL: /sedes-publicas/
+    Solo lectura, accesible por cualquiera, y filtra sedes sin tarifas.
+    """
+
+    queryset = models.Sede.objects.all()
+    serializer_class = SedeSR
+    permission_classes = [AllowAny]
+    filterset_fields = {"negocio": ("exact",), "city": ("exact",)}
+
+    def get_queryset(self):
+        # Sedes activas de negocios activos que tengan al menos una tarifa activa
+        negocios_subquery = (
+            models.Negocio.objects
+            .activos()
+            .filter(
+                tarifas__status="Activo",
+                # tarifas__isnull=False,
+                sedes=models.models.OuterRef('pk'),
+            ).distinct()
+        )
+
+        return (
+            super()
+            .get_queryset()
+            .activos()
+            .filter(
+                models.models.Exists(negocios_subquery),
+                puestos__status="Activo",
+            )
+            .distinct()
+        )
+
+
 class SedeViewSet(ModelViewSet):
     """
     Sedes de un negocio.
@@ -25,17 +61,9 @@ class SedeViewSet(ModelViewSet):
     """
 
     queryset = models.Sede.objects.all()
+    permission_classes = (IsSede,)
     serializer_class = SedeSR
-    filterset_fields = {
-        "negocio": ("exact",)
-    }
-
-    def get_permissions(self):
-        if self.action in ("list", "retrieve"):
-            self.permission_classes = (AllowAny,)
-        else:
-            self.permission_classes = (IsSede,)
-        return super().get_permissions()
+    filterset_fields = {"negocio": ("exact",)}
 
 
 class SedeNegocioNestedViewSet(

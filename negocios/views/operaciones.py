@@ -107,7 +107,7 @@ class ResenaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
 class ReservaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
     """
     Reservas de un parqueadero.
-    URL: /negocios/{nit}/reservas/
+    URL: /sedes/{uuid}/reservas/
     - Clientes: solo ven sus propias reservas
     - Negocio (dueño/admin): ven todas las reservas de su negocio
     Autenticación requerida para todas las operaciones.
@@ -118,9 +118,9 @@ class ReservaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet)
     permission_classes = (IsAuthenticated,)
     nested_instances = [
         {
-            "lookup": "negocio",
-            "field_name": "negocio_id",
-            "model_class": models.Negocio,
+            "lookup": "sede",
+            "field_name": "sede",
+            "model_class": models.Sede,
         }
     ]
 
@@ -128,7 +128,12 @@ class ReservaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet)
         qs = super().get_queryset()
         user = self.request.user
 
-        if user.is_negocio:
-            return qs
+        # if user.is_negocio:
+        #     return qs
 
         return qs.filter(usuario=user)
+
+
+    def create(self, request, *args, **kwargs):
+        request.data["usuario"] = request.user.pk
+        return super().create(request, *args, **kwargs)

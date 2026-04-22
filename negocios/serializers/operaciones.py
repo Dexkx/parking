@@ -66,6 +66,9 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
     negocio = serializers.PrimaryKeyRelatedField(
         queryset=models.Negocio.objects.all(), write_only=True
     )
+    sede = serializers.PrimaryKeyRelatedField(
+        queryset=models.Sede.objects.all(), write_only=True
+    )
 
     # Valor actualizado solo en negocios.signals.operaciones antes de guardar en la DB
     valor_pagado = serializers.DecimalField(
@@ -85,6 +88,7 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
         fields = (
             "uuid",
             "negocio",
+            "sede",
             "piso",
             "numero",
             "tipo_vehiculo",
