@@ -400,7 +400,7 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-sede', para
       </div>
 
       <div>
-        <select class="input-dark" v-model="form.negocio">
+        <select class="input-dark" v-model="form.negocio" required>
           <option value="">Selecciona un negocio</option>
           <option v-for="n in negocios" :key="n.nit" :value="n.nit">
             {{ n.nombre }} · NIT {{ n.nit }}
