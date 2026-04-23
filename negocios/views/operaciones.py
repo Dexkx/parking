@@ -1,4 +1,4 @@
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from core.views.mixins import (
     NestedRouterModelMixin,
@@ -8,7 +8,7 @@ from core.views.mixins import (
 from clientes.permissions import IsCliente, IsNegocio, IsSede
 from .. import models
 from ..serializers import ResenaSR, ReservaSR, PuestoSR, TarifaSR
-
+from rest_condition import Or
 
 class PuestoSedeViewSet(
     NestedRouterModelMixin, CompositeFKMixin, NewCreatedModelMixin, ModelViewSet
@@ -47,11 +47,58 @@ class TarifasSedeViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelView
     """
 
     queryset = models.Tarifas.objects.all()
-    serializer_class = TarifaSR
     permission_classes = (IsSede,)
+    serializer_class = TarifaSR
     nested_instances = [
         {"lookup": "sede", "field_name": "sede", "model_class": models.Sede}
     ]
+
+class TarifasPublicasList(NestedRouterModelMixin, ReadOnlyModelViewSet):
+    """
+    Tarifas públicas de todas las sedes.
+    URL: /sedes-publicas/{uuid}/tarifas/
+    """
+    permission_classes = (AllowAny,)
+    serializer_class = TarifaSR
+
+    nested_instances = [
+        {"lookup": "sede_publica", "field_name": "sede", "model_class": models.Sede}
+    ]
+
+    def get_queryset(self):
+        sede_instance = self.get_param_query(instance_model=True).get('sede')
+        if not sede_instance:
+            return models.Tarifas.objects.none()
+
+        tipo_vehiculos_puestos = (
+            sede_instance.puestos
+            .disponibles()
+            .filter(
+                tipo_vehiculo=models.models.OuterRef("tipo_vehiculo")
+            )
+        )
+
+        qs = models.Tarifas.objects.activos().filter(
+            models.models.Q(sede=sede_instance) |
+            models.models.Q(negocio=sede_instance.negocio, sede__isnull=True),
+            models.models.Exists(tipo_vehiculos_puestos),
+        )
+
+        # Definir la jerarquía de prioridad: Numero (4) > Piso (3) > Sede (2) > Negocio (1)
+        priority_case = models.models.Case(
+            models.models.When(numero__isnull=False, then=models.models.Value(4)),
+            models.models.When(piso__isnull=False, then=models.models.Value(3)),
+            models.models.When(sede__isnull=False, then=models.models.Value(2)),
+            default=models.models.Value(1),
+            output_field=models.models.IntegerField(),
+        )
+
+        # Ordenar y aplicar distinct para quedarse con la más específica por (vehículo, tiempo)
+        return (
+            qs.annotate(priority=priority_case)
+            .order_by('tipo_vehiculo', 'tiempo', '-priority')
+            .distinct('tipo_vehiculo', 'tiempo')
+        )
 
 class TarifasNegocioViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
     """

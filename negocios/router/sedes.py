@@ -7,6 +7,7 @@ router = DefaultRouter(trailing_slash=False)
 router.register('sedes', views.SedeViewSet, basename='sede')
 router.register('sedes-publicas', views.SedePublicViewSet, basename='sede-publica')
 
+sedes_publicas_router = NestedDefaultRouter(router, 'sedes-publicas', lookup='sede_publica', trailing_slash=False)
 # ── /negocios/{nit}/sedes/{uuid}/... ────────────────────────────
 sedes_router = NestedDefaultRouter(router, 'sedes', lookup='sede', trailing_slash=False)
 sedes_router.register('colaboradores', views.ColaboradoresSedeViewSet,   basename='sede-colaboradores')

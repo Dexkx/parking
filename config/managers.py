@@ -27,3 +27,6 @@ class StatusQuerySet(models.QuerySet):
 
     def reservados(self):
         return self.filter(status='Reservado')
+
+    def disponibles(self):
+        return self.filter(models.Q(status='Activo') | models.Q(status='Libre'))

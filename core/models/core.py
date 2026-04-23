@@ -1,5 +1,7 @@
 from config.managers import StatusQuerySet
 from django.db import models
+from .mixins import StatusModelMixin
+from django.utils.functional import classproperty
 
 
 class ModelCoreBase(models.Model):
@@ -28,13 +30,50 @@ class Status(_ModelCoreType):
 
     name = models.CharField(max_length=100, primary_key=True, db_comment="Nombre")
 
+    @classproperty
+    def ACTIVO(cls):
+        return cls.objects.get(pk='Activo')
+
+    @classproperty
+    def INACTIVO(cls):
+        return cls.objects.get(pk='Inactivo')
+
+    @classproperty
+    def PENDIENTE(cls):
+        return cls.objects.get(pk='Pendiente')
+
+    @classproperty
+    def APROBADO(cls):
+        return cls.objects.get(pk='Aprobado')
+
+    @classproperty
+    def RECHAZADO(cls):
+        return cls.objects.get(pk='Rechazado')
+
+    @classproperty
+    def CANCELADO(cls):
+        return cls.objects.get(pk='Cancelado')
+
+    @classproperty
+    def OCUPADO(cls):
+        return cls.objects.get(pk='Ocupado')
+
+    @classproperty
+    def LIBRE(cls):
+        return cls.objects.get(pk='Libre')
+
+    @classproperty
+    def RESERVADO(cls):
+        return cls.objects.get(pk='Reservado')
+
     class Meta:
         db_table = "estados"
 
 
-class ModelCoreType(_ModelCoreType):
+
+class ModelCoreType(StatusModelMixin, _ModelCoreType):
     objects = models.Manager.from_queryset(StatusQuerySet)()
-    
+
     status = models.ForeignKey(
         Status,
         on_delete=models.CASCADE,
@@ -47,9 +86,9 @@ class ModelCoreType(_ModelCoreType):
         abstract = True
 
 
-class ModelCore(ModelCoreBase):
+class ModelCore(StatusModelMixin, ModelCoreBase):
     objects = models.Manager.from_queryset(StatusQuerySet)()
-    
+
     status = models.ForeignKey(
         Status,
         on_delete=models.CASCADE,

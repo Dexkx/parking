@@ -69,6 +69,12 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
     sede = serializers.PrimaryKeyRelatedField(
         queryset=models.Sede.objects.all(), write_only=True
     )
+    piso = serializers.CharField(max_length=20, required=False, allow_null=True) # Si es null se escoje el primer registro encontrado en validate()
+    numero = serializers.IntegerField(required=False, allow_null=True) # Si es null se escoje el primer registro encontrado en validate()
+
+    tarifa = serializers.PrimaryKeyRelatedField(
+        queryset=models.Tarifas.objects.all(), write_only=True
+    )
 
     # Valor actualizado solo en negocios.signals.operaciones antes de guardar en la DB
     valor_pagado = serializers.DecimalField(
@@ -80,8 +86,34 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
 
         data["usuario"] = UsuarioSR(instance.usuario).data
         data["tipo_vehiculo"] = TipoVehiculoSR(instance.tipo_vehiculo).data
+        data["tarifa"] = TarifaSR(instance.tarifa).data
 
         return data
+
+    def validate(self, attrs):
+        print(attrs)
+        puestos_disponibles = (
+            models.Puestos.objects.disponibles()
+            .filter(
+                sede=attrs.get("sede"),
+                tipo_vehiculo=attrs.get("tipo_vehiculo"),
+            )
+        )
+        if not puestos_disponibles.exists():
+            raise serializers.ValidationError("No hay puestos disponibles para este tipo de vehículo")
+
+        print("PUESTOS DISPONIBLES: ", puestos_disponibles)
+        puesto = puestos_disponibles.first()
+        if puesto:
+            attrs["piso"] = puesto.piso
+
+
+        numero = attrs.get("numero")
+        if numero is None:
+            attrs["numero"] = puesto.numero
+
+
+        return super().validate(attrs)
 
     class Meta:
         model = models.Reserva
@@ -92,6 +124,7 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
             "piso",
             "numero",
             "tipo_vehiculo",
+            "tarifa",
             "tiempo",
             "usuario",
             "placa",

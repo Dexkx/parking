@@ -37,6 +37,21 @@ class IsSede(BasePermission):
 
         return user.is_sede(sede_id) or user.is_dueno_sede(sede_id)
 
+# class isDuenoReserva(BasePermission):
+#     def has_permission(self, request, view):
+#         user = request.user
+#         if not user.is_authenticated:
+#             return False
+
+#         reserva_id = view.kwargs.get('reserva_pk')
+#         if not reserva_id and getattr(view, 'detail', False):
+#             reserva_id = view.kwargs.get('pk')
+
+#         if not reserva_id:
+#             return True
+
+#         return user.is_dueno_reserva(reserva_id)
+
 class IsMaster(BasePermission):
     def has_permission(self, request, view):
         user = request.user

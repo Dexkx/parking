@@ -27,24 +27,26 @@ class SedePublicViewSet(ReadOnlyModelViewSet):
     filterset_fields = {"negocio": ("exact",), "city": ("exact",)}
 
     def get_queryset(self):
-        # Sedes activas de negocios activos que tengan al menos una tarifa activa
-        negocios_subquery = (
-            models.Negocio.objects
-            .activos()
-            .filter(
-                tarifas__status="Activo",
-                # tarifas__isnull=False,
-                sedes=models.models.OuterRef('pk'),
-            ).distinct()
+        qs = super().get_queryset()
+
+        puestos_compatibles = models.Puestos.objects.disponibles().filter(
+            sede=models.models.OuterRef(models.models.OuterRef("pk")),
+            tipo_vehiculo=models.models.OuterRef("tipo_vehiculo"),
+            status__in=('Activo', 'Libre')
+        )
+
+        tarifas_con_puestos = models.Tarifas.objects.activos().filter(
+            models.models.Q(sede=models.models.OuterRef("pk")) |
+            models.models.Q(negocio=models.models.OuterRef("negocio"), sede__isnull=True),
+            models.models.Exists(puestos_compatibles)
         )
 
         return (
-            super()
-            .get_queryset()
+            qs
             .activos()
             .filter(
-                models.models.Exists(negocios_subquery),
-                puestos__status="Activo",
+                models.models.Exists(tarifas_con_puestos),
+                negocio__status="Activo",
             )
             .distinct()
         )

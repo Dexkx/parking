@@ -7,10 +7,12 @@ from .. import serializers
 class TipoVehiculoGetOnlyView(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     queryset = models.TipoVehiculo.objects.all()
     serializer_class = serializers.TipoVehiculoSR
-
+    
     filterset_fields = {
         'status': ('exact',)
     }
+
+
 
 
 class TipoIdentificacionGetOnlyView(ListModelMixin, RetrieveModelMixin, GenericViewSet):

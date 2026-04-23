@@ -261,7 +261,7 @@ class Reserva(PostgresPartitionedModel, ModelCore):
 
         constraints = (
             ExclusionConstraint(
-                name="prevenir_superposicion_reservas",
+                name="en",
                 expressions=(
                     ("negocio", RangeOperators.EQUAL),
                     ("sede", RangeOperators.EQUAL),
