@@ -66,7 +66,7 @@ export const sedesApi = {
   /** GET  /api/sedes/:id/tarifas */
   tarifas: (id)          => api.get(`/sedes-publicas/${id}/tarifas`),
   /** GET  /api/sedes/:id/puestos */
-  puestos: (id)          => api.get(`/sedes-publicas/${id}/puestos`),
+  puestos: (id)          => api.get(`/sedes/${id}/puestos`),
 }
 
 export const reservasApi = {
