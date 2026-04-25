@@ -115,10 +115,13 @@ const FILTROS = [
 // Computar la lista según el filtro activo
 const negociosFiltrados = computed(() => {
   let lista = [...store.items]
+
   if (filtroActivo.value === 'disponible')
-    lista = lista.filter(n => n.status === 'Activo')
+    lista = lista.filter(n => n.status.value === 'Activo')
+
   if (filtroActivo.value === 'mejor_valorado')
     lista = lista.sort((a, b) => (b.puntuacion ?? 0) - (a.puntuacion ?? 0))
+
   return lista
 })
 

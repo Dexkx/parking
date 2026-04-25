@@ -58,7 +58,7 @@ function fmt(iso) {
                style="background:rgba(0,229,176,0.05);border:1px solid rgba(0,229,176,0.18)">
             <div class="text-[10px] text-t-muted uppercase tracking-wider mb-1">Parqueadero</div>
             <div class="font-head font-bold text-base text-t-primary mb-3">
-              {{ reserva.negocio ?? reserva.sede ?? '—' }}
+              {{ reserva.sede.nombre ?? reserva.sede ?? '—' }}
             </div>
             <div class="text-[10px] text-t-muted uppercase tracking-wider mb-1">Placa</div>
             <div class="font-head font-extrabold text-3xl text-accent tracking-widest">
@@ -78,13 +78,13 @@ function fmt(iso) {
               <div class="text-[10px] text-t-muted uppercase tracking-wider mb-0.5">Estado</div>
               <span :class="[
                 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold',
-                reserva.status === 'Cancelado'
+                reserva.status.value === 'Cancelado'
                   ? 'badge-red'
-                  : reserva.status === 'Activo'
+                  : reserva.status.value === 'Activo'
                   ? 'badge-green'
                   : 'badge-blue'
               ]">
-                {{ reserva.status ?? 'Activa' }}
+                {{ reserva.status.value ?? 'Activa' }}
               </span>
             </div>
             <div>

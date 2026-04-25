@@ -1,7 +1,7 @@
 /**
  * stores/auth.js
  * Pinia store para manejo de sesión y usuario autenticado.
- * 
+ *
  * Estado:
  *   user        → datos del usuario (numero_id, nombre)
  *   loading     → cargando sesión inicial
@@ -23,6 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
   // ── Getters ──────────────────────────────────────
   const isAuthenticated = computed(() => !!user.value)
   const userName = computed(() => user.value?.nombre?.split(' ')[0] ?? user.value?.numero_id ?? '')
+  const userId = computed(() => user.value?.numero_id)
 
   // ── Acciones ──────────────────────────────────────
 
@@ -61,5 +62,5 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
   }
 
-  return { user, loading, isAuthenticated, userName, loadSession, login, logout }
+  return { user, loading, isAuthenticated, userName, userId, loadSession, login, logout }
 })

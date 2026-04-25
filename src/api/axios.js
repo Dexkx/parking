@@ -18,7 +18,8 @@ api.interceptors.response.use(
   async err => {
     console.log(err.response)
     const original = err.config
-    if (err.response?.status === 401 && !original._retry) {
+    const code_status = [401, 403]
+    if (code_status.includes(err.response?.status) && !original._retry) {
       original._retry = true
       const refresh = localStorage.getItem('refresh_token')
       if (refresh) {
@@ -71,11 +72,11 @@ export const sedesApi = {
 
 export const reservasApi = {
   /** GET  /api/sedes/:uuid/reservas */
-  mis: (uuid)              => api.get(`/sedes/${uuid}/reservas`),
+  mis: (id)              => api.get(`/usuarios/${id}/reservas`),
   /** POST /api/sedes/:uuid/reservas */
-  crear: (uuid, d)         => api.post(`/sedes/${uuid}/reservas`, d),
-  /** DELETE /api/sedes/:uuid/reservas/:uuid */
-  cancelar: (uuid, r_uuid)   => api.delete(`/sedes/${uuid}/reservas/${r_uuid}`),
+  crear: (id, d)         => api.post(`/usuarios/${id}/reservas`, d),
+  /** PATCH /api/sedes/:uuid/reservas/:uuid */
+  cancelar: (id, r_uuid)   => api.patch(`/usuarios/${id}/reservas/${r_uuid}`, { status: 'Cancelado' }),
 }
 
 export const vehiculosApi = {

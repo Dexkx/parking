@@ -11,24 +11,24 @@ import { useToast } from 'vue-toastification'
 import ReservaModal from '@/components/ReservaModal.vue'
 
 const props = defineProps({
-  sede:  { type: Object,  required: true },
-  index: { type: Number,  default: 0 },
+  sede: { type: Object, required: true },
+  index: { type: Number, default: 0 },
 })
 const emit = defineEmits(['login-required'])
 
-const auth  = useAuthStore()
+const auth = useAuthStore()
 const toast = useToast()
 
 const reservaOpen = ref(false)
 
 // ── Computed ──────────────────────────────
-const disponible = computed(() => props.sede.status === 'Activo')
+const disponible = computed(() => props.sede.status.value === 'Activo')
 const precioBase = computed(() => props.sede.tarifas?.[0]?.valor
   ? `$${Number(props.sede.tarifas[0].valor).toLocaleString('es-CO')}/h`
   : '—')
 const puntuacion = computed(() => Number(props.sede.puntuacion ?? 0))
-const estrellas  = computed(() => Math.round(puntuacion.value))
-const animDelay  = computed(() => `${props.index * 70}ms`)
+const estrellas = computed(() => Math.round(puntuacion.value))
+const animDelay = computed(() => `${props.index * 70}ms`)
 
 // ── Abrir modal ───────────────────────────
 function abrirReserva() {
@@ -46,11 +46,8 @@ function onConfirmada({ sede, placa, precio }) {
 </script>
 
 <template>
-  <article
-    class="card-dark rounded-lg overflow-hidden hover:-translate-y-1 hover:shadow-card
-           transition-all duration-200 cursor-pointer animate-fade-up"
-    :style="{ animationDelay: animDelay }"
-  >
+  <article class="card-dark rounded-lg overflow-hidden hover:-translate-y-1 hover:shadow-card
+           transition-all duration-200 cursor-pointer animate-fade-up" :style="{ animationDelay: animDelay }">
     <!-- Cabecera: nombre + badge -->
     <div class="flex justify-between items-start p-4 pb-0">
       <div class="flex-1 min-w-0 pr-3">
@@ -64,7 +61,7 @@ function onConfirmada({ sede, placa, precio }) {
       </div>
       <span :class="disponible ? 'badge-green' : 'badge-red'" class="shrink-0">
         <span :class="['w-1.5 h-1.5 rounded-full',
-                       disponible ? 'animate-pulse-dot bg-accent' : 'bg-danger']" />
+          disponible ? 'animate-pulse-dot bg-accent' : 'bg-danger']" />
         {{ disponible ? 'Disponible' : 'Cerrado' }}
       </span>
     </div>
@@ -76,43 +73,42 @@ function onConfirmada({ sede, placa, precio }) {
     <div class="grid grid-cols-3 gap-2 px-4">
       <div class="bg-input rounded-sm p-2.5">
         <div class="text-[10px] text-t-muted font-medium tracking-wider uppercase mb-1">Precio base</div>
-        <div class="font-head font-bold text-accent text-base">{{ precioBase }}</div>
+        <div class="font-head font-bold text-accent">{{ precioBase }}</div>
       </div>
       <div class="bg-input rounded-sm p-2.5">
         <div class="text-[10px] text-t-muted font-medium tracking-wider uppercase mb-1">Puestos</div>
         <div class="font-head font-bold text-base text-t-primary">{{ sede.puestos_count ?? '—' }}</div>
       </div>
       <div class="bg-input rounded-sm p-2.5">
-        <div class="text-[10px] text-t-muted font-medium tracking-wider uppercase mb-1">Ciudad</div>
-        <div class="text-sm font-medium text-t-secondary truncate">{{ sede.city?.name ?? '—' }}</div>
+        <div v-if="sede.city.name">
+          <div class="text-[10px] text-t-muted font-medium tracking-wider uppercase mb-1">Ciudad</div>
+          <div class="text-sm font-medium text-t-secondary truncate">{{ sede.city?.name ?? '—' }}</div>
+        </div>
+        <div v-else>
+          <div class="text-[10px] text-t-muted font-medium tracking-wider uppercase mb-1">Localidad</div>
+          <div class="text-sm font-medium text-t-secondary truncate">{{ sede.state?.name ?? '—' }}</div>
+        </div>
       </div>
     </div>
 
     <!-- Footer: estrellas + botón -->
     <div class="flex justify-between items-center px-4 py-3 mt-1">
       <div class="flex items-center gap-1">
-        <Star v-for="n in 5" :key="n"
-              :size="12"
-              :fill="n <= estrellas ? '#fbbf24' : 'none'"
-              :color="n <= estrellas ? '#fbbf24' : '#4e5568'"
-              :stroke-width="1.5" />
+        <Star v-for="n in 5" :key="n" :size="12" :fill="n <= estrellas ? '#fbbf24' : 'none'"
+          :color="n <= estrellas ? '#fbbf24' : '#4e5568'" :stroke-width="1.5" />
         <span class="text-xs text-t-secondary ml-1">
           {{ puntuacion > 0 ? puntuacion.toFixed(1) : '—' }}
         </span>
       </div>
       <button class="btn-primary text-xs px-3 py-1.5" @click="abrirReserva">
-        Reservar <ChevronRight :size="13" />
+        Reservar
+        <ChevronRight :size="13" />
       </button>
     </div>
   </article>
 
   <!-- Modal de reserva (montado fuera del article para evitar z-index issues) -->
   <Teleport to="body">
-    <ReservaModal
-      :open="reservaOpen"
-      :sede="sede"
-      @close="reservaOpen = false"
-      @confirmada="onConfirmada"
-    />
+    <ReservaModal :open="reservaOpen" :sede="sede" @close="reservaOpen = false" @confirmada="onConfirmada" />
   </Teleport>
 </template>

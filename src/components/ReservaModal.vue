@@ -42,6 +42,7 @@ const vehiculosUser = ref([])      // placas registradas del usuario
 
 const emptyForm = {
   negocio:       props.sede.negocio.nit,
+  sede:          props.sede.uuid,
   tipo_vehiculo: '',  // id del tipo de vehículo
   tarifa:        null, // objeto tarifa seleccionada
   placa:         '',   // placa manual o seleccionada
@@ -168,8 +169,7 @@ async function handleSubmit() {
       hf_inicio:    inicio.toISOString(),
       hf_final:     fin.toISOString(),
     }
-    console.log(data)
-    await reservasApi.crear(props.sede.uuid, data)
+    await reservasApi.crear(auth.user.numero_id, data)
 
     emit('confirmada', {
       sede:     props.sede.nombre,
