@@ -70,15 +70,15 @@ async function handleSubmit() {
 
 // ── Eliminar ───────────────────────────────────────
 async function editStatus(item) {
-  const accion = item.status === 'Activo' ? 'Desactivar' : 'Activar'
+  const accion = item.status.value === 'Activo' ? 'Desactivar' : 'Activar'
   if (!confirm(`¿${accion} la tarifa "${item.tipo_vehiculo?.name}"?`)) return
 
   try {
-    const res = await tarifasSedeApi.editStatus(sedeId, item.uuid, item.status === 'Activo' ? 'Inactivo' : 'Activo')
-    toast.success(`Tarifa ${res.data?.status}`)
+    const res = await tarifasSedeApi.editStatus(sedeId, item.uuid, item.status.value === 'Activo' ? 'Inactivo' : 'Activo')
+    toast.success(`Tarifa ${res.data?.status.value}`)
 
     const found = items.value.find(n => n.uuid === item.uuid)
-    if (found) found.status = res.data?.status
+    if (found) found.status.value = res.data?.status.value
 
   } catch { toast.error('No se pudo cambiar el estado') }
 }
@@ -155,7 +155,7 @@ const alcance = (t) => {
     <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div v-for="t in items" :key="`${t.tipo_vehiculo_id}-${t.tiempo}`"
            class="card-dark rounded-lg overflow-hidden hover:border-border-hover transition-all animate-fade-up"
-          :class="{ '!opacity-60': t.status !== 'Activo' }">
+          :class="{ '!opacity-60': t.status.value !== 'Activo' }">
 
           <!-- Top -->
         <div class="flex items-start justify-between p-4 pb-3">
@@ -198,14 +198,14 @@ const alcance = (t) => {
         <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-surface/30">
           <div class="flex gap-1">
             <button class="btn-icon w-7 h-7" :class="{
-              'hover:text-danger hover:border-danger/30': t.status === 'Activo',
-              'hover:text-accent hover:border-accent/30': t.status === 'Inactivo',
-              }" :title="t.status === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(t)">
-              <ThumbsUp :size="12" v-if="t.status === 'Inactivo'" />
+              'hover:text-danger hover:border-danger/30': t.status.value === 'Activo',
+              'hover:text-accent hover:border-accent/30': t.status.value === 'Inactivo',
+              }" :title="t.status.value === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(t)">
+              <ThumbsUp :size="12" v-if="t.status.value === 'Inactivo'" />
               <ThumbsDown :size="12" v-else />
             </button>
           </div>
-          <div class="text-[10px] text-t-muted font-mono uppercase">{{ t.status }}</div>
+          <div class="text-[10px] text-t-muted font-mono uppercase">{{ t.status.value }}</div>
         </div>
       </div>
     </div>

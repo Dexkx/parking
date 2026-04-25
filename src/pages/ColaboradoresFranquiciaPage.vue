@@ -10,9 +10,11 @@ import { ArrowLeft, Plus, Pencil, Trash2, Users, Building2 } from 'lucide-vue-ne
 import CrudModal from '@/components/CrudModal.vue'
 import { franquiciasApi, catalogosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
+import { useAuthStore } from '@/stores/auth'
 
 const route  = useRoute()
 const router = useRouter()
+const auth   = useAuthStore()
 const toast  = useToast()
 
 const uuid       = route.params.uuid
@@ -90,6 +92,38 @@ const TIPO_BADGES = { '-1': 'badge-purple', '0': 'badge-blue', '1': 'badge-green
 const badgeFranq  = (col) => TIPO_BADGES[col.tipo_colaborador?.code ?? col.tipo_colaborador] ?? 'badge-blue'
 const labelFranq  = (col) => col.tipo_colaborador?.descripcion ?? col.tipo_colaborador ?? '—'
 const inicial     = (col) => (col.usuario?.nombre ?? col.usuario?.numero_id ?? '?').charAt(0).toUpperCase()
+
+function tipos_colab_filtering() {
+  const role = auth.getRole('franquicias', franquicia.value)
+
+  let tipos_available = tipos.value.filter(t => t.code !== '-1')
+
+  switch (role) {
+    case '1':
+      tipos_available = []
+      break
+    case '0':
+      tipos_available = tipos_available.filter(t => t.code !== '0')
+      break
+    default:
+      break
+  }
+
+  return tipos_available
+}
+
+function can_action(action, tipo_colab) {
+  const role = auth.getRole('franquicias', franquicia.value)
+  if (role === '-1') return true
+  if (tipo_colab === '-1' || !tipo_colab) return false
+
+  switch (action) {
+    case 'edit':
+      return false
+    case 'delete':
+      return role === '0' && tipo_colab !== '0'
+  }
+}
 </script>
 
 <template>
@@ -150,8 +184,11 @@ const inicial     = (col) => (col.usuario?.nombre ?? col.usuario?.numero_id ?? '
         </div>
         <div class="flex items-center justify-end gap-1.5 pr-4 py-3">
           <template v-if="(col.tipo_colaborador?.code ?? col.tipo_colaborador) !== '-1'">
-            <button class="btn-icon w-7 h-7" @click="openEdit(col)"><Pencil :size="12" /></button>
-            <button class="btn-icon w-7 h-7 hover:text-danger hover:border-danger/30" @click="handleDelete(col)"><Trash2 :size="12" /></button>
+            <button class="btn-icon w-7 h-7" v-if="can_action('edit', col.tipo_colaborador?.code)"
+              @click="openEdit(col)"><Pencil :size="12" /></button>
+            <button class="btn-icon w-7 h-7 hover:text-danger hover:border-danger/30"
+              v-if="can_action('delete', col.tipo_colaborador?.code)"
+              @click="handleDelete(col)"><Trash2 :size="12" /></button>
           </template>
           <span v-else class="text-[11px] text-t-muted italic px-1">Propietario</span>
         </div>
@@ -190,7 +227,7 @@ const inicial     = (col) => (col.usuario?.nombre ?? col.usuario?.numero_id ?? '
         <label class="label-dark">ROL</label>
         <select class="input-dark" v-model="form.tipo_colaborador" required>
           <option value="">Selecciona un rol</option>
-          <option v-for="t in tipos.filter(t => t.code !== '-1')" :key="t.code" :value="t.code">
+          <option v-for="t in tipos_colab_filtering()" :key="t.code" :value="t.code">
             {{ t.descripcion }}
           </option>
         </select>

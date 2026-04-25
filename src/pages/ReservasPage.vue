@@ -1,38 +1,29 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Search, CalendarCheck, XCircle, Receipt, Loader2 } from 'lucide-vue-next'
+import { Search, CalendarCheck, X, Receipt, Loader2 } from 'lucide-vue-next'
 import { format, isPast } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { reservasApi, negociosApi } from '@/api/axios'
+import { reservasApi } from '@/api/axios'
 import { useSwal } from '@/composables/useSwal'
 import { useToast } from 'vue-toastification'
 
 const toast = useToast()
 const { showTicket, confirmAction } = useSwal()
 
-const negocios  = ref([])
-const nitActivo = ref('')
-const reservas  = ref([])
-const loading   = ref(true)
-const query     = ref('')
-const estado    = ref('all') // 'all' | 'activa' | 'completada' | 'cancelada'
+const reservas = ref([])
+const loading = ref(true)
+const query = ref('')
+const estado = ref('all') // 'all' | 'activa' | 'completada' | 'cancelada'
 
 onMounted(async () => {
-  const res = await negociosApi.list()
-  negocios.value = res.data?.results ?? res.data ?? []
-  if (negocios.value.length > 0) {
-    nitActivo.value = negocios.value[0].nit
-    await cargar()
-  }
-  loading.value = false
+  await cargar()
 })
 
 async function cargar() {
-  if (!nitActivo.value) return
   loading.value = true
   try {
-    const res = await reservasApi.list(nitActivo.value)
-    reservas.value = res.data?.results ?? res.data ?? []
+    const res = await reservasApi.list()
+    reservas.value = res.data
   } finally { loading.value = false }
 }
 
@@ -42,32 +33,42 @@ const lista = computed(() => {
     const q = query.value.toLowerCase()
     l = l.filter(r => r.placa?.toLowerCase().includes(q) || r.usuario?.toLowerCase().includes(q))
   }
-  if (estado.value === 'activa')     l = l.filter(r => !isPast(new Date(r.hf_final)) && r.status !== 'Cancelado')
-  if (estado.value === 'completada') l = l.filter(r => isPast(new Date(r.hf_final)) && r.status !== 'Cancelado')
-  if (estado.value === 'cancelada')  l = l.filter(r => r.status === 'Cancelado')
+
+  switch (estado.value) {
+    case 'activa':
+      l = l.filter(r => !isPast(new Date(r.hf_final)) && r.status.value !== 'Cancelado')
+      break
+    case 'completada':
+      l = l.filter(r => isPast(new Date(r.hf_final)) && r.status.value !== 'Cancelado')
+      break
+    case 'cancelada':
+      l = l.filter(r => r.status.value === 'Cancelado')
+      break
+  }
   return l
 })
 
 const fmt = (iso) => format(new Date(iso), 'dd MMM · HH:mm', { locale: es })
 
 function badgeClass(r) {
-  if (r.status === 'Cancelado') return 'badge-red'
-  if (isPast(new Date(r.hf_final))) return 'badge-blue'
-  return 'badge-green'
-}
-function badgeLabel(r) {
-  if (r.status === 'Cancelado') return 'Cancelada'
-  if (isPast(new Date(r.hf_final))) return 'Completada'
-  return 'Activa'
+  switch (r.status.value) {
+    case 'Cancelado': return 'badge-red'
+    case 'Libre': return 'badge-blue'
+    case 'Activo': return 'badge-green'
+    default: return 'badge-gray'
+  }
 }
 
 async function cancelar(r) {
   const { isConfirmed } = await confirmAction('¿Cancelar reserva?', `Placa <b>${r.placa}</b> — esta acción es irreversible.`, 'Sí, cancelar')
   if (!isConfirmed) return
   try {
-    await reservasApi.cancelar(nitActivo.value, r.uuid)
+    const rs = await reservasApi.cancelar(r.uuid)
+
+    const rFind = reservas.value.find(rf => rf.uuid === r.uuid)
+    rFind.status = rs.data.status
+
     toast.success('Reserva cancelada')
-    await cargar()
   } catch { toast.error('No se pudo cancelar') }
 }
 </script>
@@ -81,27 +82,26 @@ async function cancelar(r) {
 
     <!-- Filtros -->
     <div class="flex flex-wrap gap-3 mb-5">
-      <select class="input-dark w-56" v-model="nitActivo" @change="cargar">
+      <!-- <select class="input-dark w-56" v-model="nitActivo" @change="cargar">
         <option v-for="n in negocios" :key="n.nit" :value="n.nit">{{ n.nombre }}</option>
-      </select>
+      </select> -->
 
       <div class="flex items-center gap-2 flex-1 min-w-[200px] bg-input border border-border rounded-sm px-3 py-2">
         <Search :size="13" class="text-t-muted shrink-0" />
-        <input v-model="query" class="flex-1 bg-transparent border-none outline-none text-sm text-t-primary placeholder:text-t-muted"
-               placeholder="Buscar por placa o usuario..." />
+        <input v-model="query"
+          class="flex-1 bg-transparent border-none outline-none text-sm text-t-primary placeholder:text-t-muted"
+          placeholder="Buscar por placa o usuario..." />
       </div>
 
       <div class="flex gap-1.5">
         <button v-for="e in [
-          { key:'all', label:'Todas' },
-          { key:'activa', label:'Activas' },
-          { key:'completada', label:'Completadas' },
-          { key:'cancelada', label:'Canceladas' },
-        ]" :key="e.key"
-          :class="['filter-chip', estado === e.key
-            ? 'border-accent text-accent bg-accent/10'
-            : 'border-border text-t-secondary hover:border-border-hover hover:text-t-primary']"
-          @click="estado = e.key">
+          { key: 'all', label: 'Todas' },
+          { key: 'activa', label: 'Activas' },
+          { key: 'completada', label: 'Completadas' },
+          { key: 'cancelada', label: 'Canceladas' },
+        ]" :key="e.key" :class="['filter-chip', estado === e.key
+          ? 'border-accent text-accent bg-accent/10'
+          : 'border-border text-t-secondary hover:border-border-hover hover:text-t-primary']" @click="estado = e.key">
           {{ e.label }}
         </button>
       </div>
@@ -121,36 +121,58 @@ async function cancelar(r) {
 
     <!-- Tabla -->
     <div v-else class="card-dark rounded-lg overflow-hidden">
-      <div class="table-row grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr_1fr_100px] bg-surface/50">
-        <div class="table-head-cell">Placa</div>
-        <div class="table-head-cell">Entrada</div>
-        <div class="table-head-cell">Salida</div>
-        <div class="table-head-cell">Piso/Puesto</div>
-        <div class="table-head-cell">Total</div>
-        <div class="table-head-cell">Estado</div>
-        <div class="table-head-cell justify-end">Acciones</div>
-      </div>
-
-      <div v-for="r in lista" :key="r.uuid"
-           class="table-row grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr_1fr_100px]">
-        <div class="table-cell font-head font-bold text-accent tracking-widest text-xs">{{ r.placa }}</div>
-        <div class="table-cell text-xs text-t-secondary">{{ fmt(r.hf_inicio) }}</div>
-        <div class="table-cell text-xs text-t-secondary">{{ fmt(r.hf_final) }}</div>
-        <div class="table-cell text-xs text-t-secondary">{{ r.piso ?? '—' }} · #{{ r.numero ?? '—' }}</div>
-        <div class="table-cell font-head font-bold text-sm">${{ Number(r.valor_pagado ?? 0).toLocaleString('es-CO') }}</div>
-        <div class="table-cell"><span :class="badgeClass(r)">{{ badgeLabel(r) }}</span></div>
-        <div class="table-cell justify-end gap-1">
-          <button class="btn-icon w-7 h-7" title="Ver ticket"
-                  @click="showTicket({ ...r, negocio: negocios.find(n => n.nit === nitActivo)?.nombre })">
-            <Receipt :size="13" />
-          </button>
-          <button v-if="!isPast(new Date(r.hf_final)) && r.status !== 'Cancelado'"
-                  class="btn-icon w-7 h-7 hover:text-danger hover:border-danger/30" title="Cancelar"
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-surface/50 border-b border-border">
+            <th class="table-head-cell">Placa</th>
+            <th class="table-head-cell">Vehiculo</th>
+            <th class="table-head-cell">Entrada</th>
+            <th class="table-head-cell">Salida</th>
+            <th class="table-head-cell">Piso/Puesto</th>
+            <th class="table-head-cell">Total</th>
+            <th class="table-head-cell">Estado</th>
+            <th class="table-head-cell">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="r in lista" :key="r.uuid"
+            class="border-b border-border last:border-0 hover:bg-surface/30 transition-all duration-300 group">
+            <td class="table-cell font-head font-bold text-t-primary text-sm group-hover:text-accent transition-colors">
+              {{ r.placa }}
+            </td>
+            <td class="table-cell font-head font-bold text-t-primary text-sm group-hover:text-accent transition-colors">
+              {{ r.tipo_vehiculo.name }}
+            </td>
+            <td class="table-cell text-xs font-mono text-t-secondary bg-surface/5">
+              {{ fmt(r.hf_inicio) }}
+            </td>
+            <td class="table-cell">
+              <span class="badge-blue">{{ fmt(r.hf_final) }}</span>
+            </td>
+            <td class="table-cell text-warn font-semibold bg-surface/5">
+              {{ r.piso }} · #{{ r.numero }}
+            </td>
+            <td class="table-cell">
+              {{ Number(r.valor_pagado ?? 0).toLocaleString('es-CO') }}
+            </td>
+            <td class="table-cell">
+              <span :class="badgeClass(r)">{{ r.status.value}}</span>
+            </td>
+            <td class="table-cell">
+              <div class="w-full h-full flex flex-row gap-2 items-center justify-center">
+                <button class="btn-icon " title="Ver ticket" @click="showTicket(r)">
+                  <Receipt :size="15" />
+                </button>
+                <button v-if="!isPast(new Date(r.hf_final)) && r.status.value !== 'Cancelado'"
+                  class="btn-icon hover:text-danger hover:border-danger/30" title="Cancelar"
                   @click="cancelar(r)">
-            <XCircle :size="13" />
-          </button>
-        </div>
-      </div>
+                  <X :size="15" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Resumen -->
@@ -158,7 +180,7 @@ async function cancelar(r) {
       <div class="text-xs text-t-muted">
         Total recaudado (filtro actual):
         <span class="font-head font-bold text-accent ml-1">
-          ${{ lista.reduce((a, r) => a + Number(r.valor_pagado ?? 0), 0).toLocaleString('es-CO') }} COP
+          ${{lista.reduce((a, r) => a + Number(r.valor_pagado ?? 0), 0).toLocaleString('es-CO')}} COP
         </span>
       </div>
     </div>

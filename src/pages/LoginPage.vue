@@ -18,8 +18,15 @@ async function handleLogin() {
     await auth.login(form.value.numero_id, form.value.password)
     toast.success('¡Bienvenido al dashboard!')
     router.push('/')
-  } catch {
-    toast.error('Credenciales incorrectas')
+  } catch (error) {
+    console.log(error)
+    const data = error.response.data
+    let text_error = data.detail
+
+    if (!text_error)
+      text_error = data.non_field_errors.join(' | ')
+
+    toast.error(text_error)
   } finally {
     loading.value = false
   }

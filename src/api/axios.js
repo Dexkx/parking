@@ -16,7 +16,9 @@ api.interceptors.response.use(
   async err => {
     console.log(err.response)
     const original = err.config
-    if (err.response?.status === 401 && !original._retry) {
+    const sessionExpired = err.response.data.code === "token_not_valid"
+
+    if (sessionExpired && !original._retry) {
       original._retry = true
       const refresh = localStorage.getItem('refresh_token')
       if (refresh) {
@@ -25,9 +27,10 @@ api.interceptors.response.use(
           localStorage.setItem('access_token', data.access)
           original.headers.Authorization = `Bearer ${data.access}`
           return api(original)
-        } catch {
-          localStorage.clear()
-          window.location.href = '/login'
+        } catch (error) {
+          console.log(error, error.response)
+          // localStorage.clear()
+          // window.location.href = '/login'
         }
       }
     }
@@ -39,7 +42,7 @@ export default api
 
 // ── Auth ──────────────────────────────────────────────────────
 export const authApi = {
-  login:   (d)  => api.post('/token', d),
+  login:   (d)  => api.post('/token/dashboard', d),
   refresh: (r)  => api.post('/token/refresh', { refresh: r }),
   me:      (id) => api.get(`/usuarios/${id}`),
 }
@@ -115,14 +118,15 @@ export const tarifasSedeApi = {
 export const clientesApi = {
   list:   (nit)      => api.get(`/negocios/${nit}/clientes`),
   create: (nit, d)   => api.post(`/negocios/${nit}/clientes`, d),
-  remove: (nit, uid) => api.delete(`/negocios/${nit}/clientes/${uid}`),
+  editStatus: (nit, uid, newStatus) => api.patch(`/negocios/${nit}/clientes/${uid}`, { 'status': newStatus }),
+  delete: (nit, uid) => api.delete(`/negocios/${nit}/clientes/${uid}`),
 }
 
 // ── Reservas ──────────────────────────────────────────────────
 export const reservasApi = {
-  list:    (nit, p = {}) => api.get(`/negocios/${nit}/reservas`, { params: p }),
-  create:  (nit, d)      => api.post(`/negocios/${nit}/reservas`, d),
-  cancelar:(nit, uuid)   => api.delete(`/negocios/${nit}/reservas/${uuid}`),
+  list:    (p = {}) => api.get(`/reservas`, { params: p }),
+  create:  (d)      => api.post(`/reservas`, d),
+  cancelar:(uuid)   => api.patch(`/reservas/${uuid}`, { 'status': 'Cancelado' }),
 }
 
 // ── Catálogos ─────────────────────────────────────────────────

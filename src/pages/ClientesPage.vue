@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Plus, Trash2, Users, Search, Building2 } from 'lucide-vue-next'
+import { Plus, Trash2, Users, Search, ThumbsDown, ThumbsUp } from 'lucide-vue-next'
 import CrudModal from '@/components/CrudModal.vue'
 import { clientesApi, negociosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
@@ -58,13 +58,25 @@ async function handleSubmit() {
   } finally { saving.value = false }
 }
 
-async function handleDelete(c) {
-  if (!confirm(`¿Remover a ${c.usuario?.nombre ?? c.usuario} de este negocio?`)) return
+async function editStatus(item) {
+  const accion = item.status.value === 'Activo' ? 'Desactivar' : 'Activar'
+  if (!confirm(`¿${accion} el cliente "${item.usuario?.nombre}"?`)) return
   try {
-    await clientesApi.remove(nitActivo.value, c.usuario?.numero_id)
-    toast.success('Cliente removido')
+    const res = await clientesApi.editStatus(nitActivo.value, item.usuario.numero_id, item.status.value === 'Activo' ? 'Inactivo' : 'Activo')
+    toast.success(`Cliente ${res.data?.status.value}`)
+    const found = lista.value.find(n => n.usuario.numero_id === item.usuario.numero_id)
+    if (found) found.status.value = res.data?.status.value
+  } catch { toast.error('No se pudo cambiar el estado') }
+}
+
+async function deleteClient(item) {
+  if (!confirm(`¿Eliminar el cliente "${item.usuario?.nombre}"?`)) return
+  
+  try {
+    await clientesApi.delete(nitActivo.value, item.usuario.numero_id)
+    toast.success('Cliente eliminado correctamente')
     await cargarClientes()
-  } catch { toast.error('No se pudo remover') }
+  } catch { toast.error('No se pudo eliminar el cliente') }
 }
 </script>
 
@@ -131,12 +143,22 @@ async function handleDelete(c) {
             </td>
             <td class="table-cell font-mono text-xs text-t-secondary">{{ c.usuario?.numero_id ?? '—' }}</td>
             <td class="table-cell">
-              <span :class="c.status === 'Activo' ? 'badge-green' : 'badge-red'">{{ c.status }}</span>
+              <span :class="c.status.value === 'Activo' ? 'badge-green' : 'badge-red'">{{ c.status.value }}</span>
             </td>
             <td class="table-cell justify-end">
-              <button class="btn-icon w-7 h-7 hover:text-danger hover:border-danger/30" @click="handleDelete(c)">
-                <Trash2 :size="13" />
-              </button>
+              <div class="flex flex-row flex-wrap gap-2">
+                <button class="btn-icon w-7 h-7"
+                  :class="{ 'hover:text-danger hover:border-danger/30': c.status.value === 'Activo',
+                    'hover:text-accent hover:border-accent/30': c.status.value === 'Inactivo'}"
+                  :title="`${c.status.value === 'Activo' ? 'Desactivar' : 'Activar'} membresía`" @click="editStatus(c)">
+                  <ThumbsDown v-if="c.status.value === 'Activo'" :size="13" />
+                  <ThumbsUp v-else :size="13" />
+                </button>
+                <button class="btn-icon w-7 h-7 hover:text-danger hover:border-danger/30"
+                  title="Eliminar cliente" @click="deleteClient(c)">
+                  <Trash2 size="13"/>
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>

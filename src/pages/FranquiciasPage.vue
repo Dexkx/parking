@@ -48,16 +48,20 @@ function openCreate() {
   modal.value = { open: true, mode: 'create', item: null }
 }
 function openEdit(item) {
-  form.value  = { ...item }
+  form.value  = { ...item, status: item.status.value }
   modal.value = { open: true, mode: 'edit', item }
 }
 function closeModal() { modal.value.open = false }
 
 async function handleSubmit() {
   saving.value = true
+  console.log(form.value)
   try {
     if (modal.value.mode === 'create') {
       await franquiciasApi.create(form.value)
+
+      await auth.refreshUser(auth.user?.numero_id)
+
       toast.success('Franquicia creada')
     } else {
       await franquiciasApi.update(modal.value.item.uuid, form.value)
@@ -66,18 +70,19 @@ async function handleSubmit() {
     closeModal()
     await fetchAll()
   } catch (err) {
+    console.log(err)
     toast.error(err.response?.data ? Object.values(err.response.data).flat().join(' · ') : 'Error al guardar')
   } finally { saving.value = false }
 }
 
 async function editStatus(item) {
-  const accion = item.status === 'Activo' ? 'Desactivar' : 'Activar'
+  const accion = item.status.value === 'Activo' ? 'Desactivar' : 'Activar'
   if (!confirm(`¿${accion} la franquicia "${item.nombre}"?`)) return
   try {
-    const res = await franquiciasApi.editStatus(item.uuid, item.status === 'Activo' ? 'Inactivo' : 'Activo')
-    toast.success(`Franquicia ${res.data?.status}`)
+    const res = await franquiciasApi.editStatus(item.uuid, item.status.value === 'Activo' ? 'Inactivo' : 'Activo')
+    toast.success(`Franquicia ${res.data?.status.value}`)
     const found = items.value.find(f => f.uuid === item.uuid)
-    if (found) found.status = res.data?.status
+    if (found) found.status.value = res.data?.status.value
   } catch { toast.error('No se pudo cambiar el estado') }
 }
 
@@ -139,8 +144,8 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-franquicia'
               </div>
             </div>
           </div>
-          <span :class="item.status === 'Activo' ? 'badge-green' : 'badge-red'" class="shrink-0 ml-2">
-            {{ item.status }}
+          <span :class="item.status.value === 'Activo' ? 'badge-green' : 'badge-red'" class="shrink-0 ml-2">
+            {{ item.status.value }}
           </span>
         </div>
 
@@ -155,8 +160,8 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-franquicia'
           <div class="bg-input px-3 py-2 text-center">
             <div class="text-[10px] text-t-muted uppercase tracking-wider mb-0.5">Estado</div>
             <div class="text-sm font-semibold"
-                 :class="item.status === 'Activo' ? 'text-accent' : 'text-danger'">
-              {{ item.status }}
+                :class="item.status.value === 'Activo' ? 'text-accent' : 'text-danger'">
+              {{ item.status.value }}
             </div>
           </div>
         </div>
@@ -164,27 +169,27 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-franquicia'
         <!-- Footer acciones (espejo de NegociosPage) -->
         <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-surface/30">
           <div class="flex gap-1">
-            <button class="btn-icon w-7 h-7" title="Editar franquicia" @click="openEdit(item)">
+            <button v-if="auth.can('edit', 'franquicias', item)" class="btn-icon w-7 h-7" title="Editar franquicia" @click="openEdit(item)">
               <Pencil :size="12" />
             </button>
-            <button class="btn-icon w-7 h-7" title="Gestionar colaboradores"
+            <button v-if="auth.can('manage_staff', 'franquicias', item)" class="btn-icon w-7 h-7" title="Gestionar colaboradores"
                     @click="irColaboradores(item.uuid)">
               <Users :size="12" />
             </button>
-            <button class="btn-icon w-7 h-7"
+            <button v-if="auth.can('edit', 'franquicias', item)" class="btn-icon w-7 h-7"
                     :class="{
-                      'hover:text-danger hover:border-danger/30': item.status === 'Activo',
-                      'hover:text-accent hover:border-accent/30': item.status === 'Inactivo',
+                      'hover:text-danger hover:border-danger/30': item.status.value === 'Activo',
+                      'hover:text-accent hover:border-accent/30': item.status.value === 'Inactivo',
                     }"
-                    :title="item.status === 'Activo' ? 'Desactivar' : 'Activar'"
+                    :title="item.status.value === 'Activo' ? 'Desactivar' : 'Activar'"
                     @click="editStatus(item)">
-              <ThumbsUp :size="12" v-if="item.status === 'Inactivo'" />
+              <ThumbsUp :size="12" v-if="item.status.value === 'Inactivo'" />
               <ThumbsDown :size="12" v-else />
             </button>
           </div>
 
           <!-- ← Botón "Gestionar negocios" prominente (como "Gestionar sedes" en NegociosPage) -->
-          <button class="flex items-center gap-1.5 text-xs text-accent hover:underline font-medium"
+          <button v-if="auth.can('view', 'franquicias', item)" class="flex items-center gap-1.5 text-xs text-accent hover:underline font-medium"
                   @click="irNegocios(item.uuid)">
             <ParkingCircle :size="12" /> Gestionar negocios <ChevronRight :size="12" />
           </button>

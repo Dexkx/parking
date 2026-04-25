@@ -194,15 +194,15 @@ async function handleSubmit() {
 
 // ── Eliminar ───────────────────────────────────────
 async function editStatus(item) {
-  const accion = item.status === 'Activo' ? 'Desactivar' : 'Activar'
+  const accion = item.status.value === 'Activo' ? 'Desactivar' : 'Activar'
   if (!confirm(`¿${accion} la sede "${item.nombre}"?`)) return
 
   try {
-    const res = await sedesApi.editStatus(item.uuid, item.status === 'Activo' ? 'Inactivo' : 'Activo')
-    toast.success(`Sede ${res.data?.status}`)
+    const res = await sedesApi.editStatus(item.uuid, item.status.value === 'Activo' ? 'Inactivo' : 'Activo')
+    toast.success(`Sede ${res.data?.status.value}`)
 
     const found = sedes.value.find(n => n.uuid === item.uuid)
-    if (found) found.status = res.data?.status
+    if (found) found.status.value = res.data?.status.value
 
   } catch { toast.error('No se pudo cambiar el estado') }
 }
@@ -276,7 +276,7 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-sede', para
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-0.5">
               <span class="font-head font-bold text-t-primary text-sm">{{ s.nombre }}</span>
-              <span :class="s.status === 'Activo' ? 'badge-green' : 'badge-red'">{{ s.status }}</span>
+              <span :class="s.status.value === 'Activo' ? 'badge-green' : 'badge-red'">{{ s.status.value }}</span>
               <span v-if="s.lat && s.lng" class="inline-flex items-center gap-1 text-[10px] font-medium text-accent/70">
                 <Navigation :size="9" /> GPS
               </span>
@@ -303,21 +303,21 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-sede', para
 
           <!-- Acciones -->
           <div class="flex items-center gap-1.5 shrink-0">
-            <button class="btn-icon w-8 h-8" title="Editar" @click="openEdit(s)">
+            <button v-if="auth.can('edit', 'sede', s)" class="btn-icon w-8 h-8" title="Editar" @click="openEdit(s)">
               <Pencil :size="13" />
             </button>
-            <button class="btn-icon w-7 h-7" title="Gestionar colaboradores"
+            <button v-if="auth.can('manage_staff', 'sede', s)" class="btn-icon w-7 h-7" title="Gestionar colaboradores"
                     @click="irColaboradores(s.uuid)">
               <Users :size="12" />
             </button>
-            <button class="btn-icon w-7 h-7" :class="{
-              'hover:text-danger hover:border-danger/30': s.status === 'Activo',
-              'hover:text-accent hover:border-accent/30': s.status === 'Inactivo',
-              }" :title="s.status === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(s)">
-              <ThumbsUp :size="12" v-if="s.status === 'Inactivo'" />
+            <button v-if="auth.can('edit', 'sede', s)" class="btn-icon w-7 h-7" :class="{
+              'hover:text-danger hover:border-danger/30': s.status.value === 'Activo',
+              'hover:text-accent hover:border-accent/30': s.status.value === 'Inactivo',
+              }" :title="s.status.value === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(s)">
+              <ThumbsUp :size="12" v-if="s.status.value === 'Inactivo'" />
               <ThumbsDown :size="12" v-else />
             </button>
-            <button class="btn-primary text-xs px-3 py-1.5 ml-1" @click="irPuestos(s.uuid)">
+            <button v-if="auth.can('view', 'sede', s)" class="btn-primary text-xs px-3 py-1.5 ml-1" @click="irPuestos(s.uuid)">
               <LandPlot :size="15" />
               Puestos
               <ChevronRight :size="12" />

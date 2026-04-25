@@ -31,13 +31,13 @@ export function useSwal() {
         <div style="font-family:'DM Sans';text-align:left;background:#0f1117;padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.07)">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
             <div><div style="font-size:10px;color:#4e5568;letter-spacing:.08em;margin-bottom:4px">PARQUEADERO</div>
-              <div style="color:#eef0f5;font-weight:600;font-size:13px">${reserva.negocio ?? '—'}</div></div>
+              <div style="color:#eef0f5;font-weight:600;font-size:13px">${reserva.sede.nombre ?? '—'}</div></div>
             <div><div style="font-size:10px;color:#4e5568;letter-spacing:.08em;margin-bottom:4px">PLACA</div>
               <div style="color:#00e5b0;font-weight:800;font-size:20px;font-family:Syne">${reserva.placa ?? '—'}</div></div>
             <div><div style="font-size:10px;color:#4e5568;letter-spacing:.08em;margin-bottom:4px">PISO / PUESTO</div>
               <div style="color:#eef0f5;font-weight:600">Piso ${reserva.piso ?? '—'} · #${reserva.numero ?? '—'}</div></div>
             <div><div style="font-size:10px;color:#4e5568;letter-spacing:.08em;margin-bottom:4px">ESTADO</div>
-              <div style="color:#00e5b0;font-weight:600">${reserva.status ?? 'Activa'}</div></div>
+              <div style="color:#00e5b0;font-weight:600">${reserva.status.value ?? 'Activa'}</div></div>
             <div><div style="font-size:10px;color:#4e5568;letter-spacing:.08em;margin-bottom:4px">ENTRADA</div>
               <div style="color:#eef0f5;font-size:13px">${fmt(reserva.hf_inicio)}</div></div>
             <div><div style="font-size:10px;color:#4e5568;letter-spacing:.08em;margin-bottom:4px">SALIDA</div>

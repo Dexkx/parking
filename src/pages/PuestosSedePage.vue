@@ -54,6 +54,28 @@ function openCreate() {
 }
 function closeModal() { modal.value.open = false }
 
+function badgeClass(status) {
+  switch (status) {
+    case 'Activo':
+      return 'badge-green'
+    case 'Inactivo':
+      return 'badge-red'
+    default:
+      return 'badge-blue'
+  }
+}
+
+function btnBadgeClass(status) {
+  switch (status) {
+    case 'Inactivo':
+      return 'bg-accent'
+
+    case 'Activo':
+    default:
+      return 'bg-danger'
+  }
+}
+
 async function handleSubmit() {
   saving.value = true
   try {
@@ -69,13 +91,13 @@ async function handleSubmit() {
 }
 
 async function editStatus(item) {
-  const accion = item.status === 'Activo' ? 'Desactivar' : 'Activar'
+  const accion = item.status.value === 'Activo' ? 'Desactivar' : 'Activar'
   if (!confirm(`¿${accion} el puesto "${item.numero}" del piso "${item.piso}"?`)) return
   try {
-    const res = await puestosSedeApi.editStatus(sede.value.uuid, item.piso, item.numero, item.tipo_vehiculo.id, item.status === 'Activo' ? 'Inactivo' : 'Activo')
-    toast.success(`Puesto ${res.data?.status}`)
+    const res = await puestosSedeApi.editStatus(sede.value.uuid, item.piso, item.numero, item.tipo_vehiculo.id, item.status.value === 'Activo' ? 'Inactivo' : 'Activo')
+    toast.success(`Puesto ${res.data?.status.value}`)
     const found = puestos.value.find(n => n.piso === item.piso && n.numero === item.numero && n.tipo_vehiculo.id === item.tipo_vehiculo.id)
-    if (found) found.status = res.data?.status
+    if (found) found.status.value = res.data?.status.value
   } catch { toast.error('No se pudo cambiar el estado') }
 }
 
@@ -156,22 +178,21 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { sede: sedeId } 
 
           <!-- Grid de puestos como casillas visuales -->
           <div class="p-4 grid grid-cols-5 md:grid-cols-8 gap-2">
-            <div v-for="p in puestosDelPiso" :key="`${p.piso}-${p.numero}`"
+            <div v-for="p in puestosDelPiso" :key="`${p.piso}-${p.numero}-${p.tipo_vehiculo.id}`"
                  class="group relative bg-input border border-border rounded-sm p-2 text-center hover:border-border-hover transition-all"
-                 :class="{ '!bg-red-500/10': p.status === 'Inactivo' }">
+                 :class="{ '!bg-red-500/10': p.status.value === 'Inactivo' }">
               <div class="font-head font-bold text-t-primary text-sm">#{{ p.numero }}</div>
               <div class="text-[10px] text-t-muted mt-0.5 truncate">{{ p.tipo_vehiculo?.name ?? '—' }}</div>
-              <span :class="p.status === 'Activo' ? 'badge-green' : 'badge-red'" class="mt-1">
-                {{ p.status === 'Activo' ? 'Libre' : 'Inact.' }}
+              <span :class="badgeClass(p.status.value)" class="mt-1">
+                {{ p.status.value }}
               </span>
               <!-- Btn desactivar/activar  al hover -->
               <button class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      @click="editStatus(p)" :class="{ 'bg-danger': p.status === 'Activo', 'bg-accent': p.status === 'Inactivo' }"
-                      :title="p.status === 'Activo' ? 'Desactivar' : 'Activar'">
+                      @click="editStatus(p)" :class="btnBadgeClass(p.status.value)"
+                      :title="p.status.value === 'Activo' ? 'Desactivar' : 'Activar'">
 
-                <X v-if="p.status === 'Activo'" :size="12" class="text-white" />
+                <X v-if="p.status.value === 'Activo'" :size="12" class="text-white" />
                 <Check v-else :size="12" class="text-white" />
-                <!-- <span class="text-white text-[10px] leading-none">{{ p.status === 'Activo' ? '×' : '✓' }}</span> -->
               </button>
             </div>
 

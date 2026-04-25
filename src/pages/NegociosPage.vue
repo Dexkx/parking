@@ -63,7 +63,7 @@ function openCreate() {
   modal.value = { open: true, mode: 'create', item: null }
 }
 function openEdit(item) {
-  form.value  = { ...item, creado_por: item.creado_por ?? auth.user?.numero_id, franquicia: item.franquicia?.uuid }
+  form.value  = { ...item, creado_por: item.creado_por ?? auth.user?.numero_id, franquicia: item.franquicia?.uuid, status: item.status.value }
   modal.value = { open: true, mode: 'edit', item }
 }
 function closeModal() { modal.value.open = false }
@@ -87,13 +87,13 @@ async function handleSubmit() {
 }
 
 async function editStatus(item) {
-  const accion = item.status === 'Activo' ? 'Desactivar' : 'Activar'
+  const accion = item.status.value === 'Activo' ? 'Desactivar' : 'Activar'
   if (!confirm(`¿${accion} el negocio "${item.nombre}"?`)) return
   try {
-    const res = await negociosApi.editStatus(item.nit, item.status === 'Activo' ? 'Inactivo' : 'Activo')
-    toast.success(`Negocio ${res.data?.status}`)
+    const res = await negociosApi.editStatus(item.nit, item.status.value === 'Activo' ? 'Inactivo' : 'Activo')
+    toast.success(`Negocio ${res.data?.status.value}`)
     const found = items.value.find(n => n.nit === item.nit)
-    if (found) found.status = res.data?.status
+    if (found) found.status.value = res.data?.status.value
   } catch { toast.error('No se pudo cambiar el estado') }
 }
 
@@ -102,6 +102,10 @@ async function editStatus(item) {
 const irSedes         = (nit) => router.push({ name: 'sedes-general', query: { negocio: nit } })
 const irColaboradores = (nit) => router.push({ name: 'colaboradores-negocio', params: { nit } })
 const irTarifas       = (nit) => router.push({ name: 'tarifas-negocio', params: { nit } })
+
+function filterFranquicas() {
+  return franquicias.value.filter(f => auth.can(modal.value.mode, 'franquicias', f))
+}
 </script>
 
 <template>
@@ -172,8 +176,8 @@ const irTarifas       = (nit) => router.push({ name: 'tarifas-negocio', params: 
                     @click="irTarifas(n.nit)">
               <DollarSign :size="12" /> Tarifas
             </button>
-            <span :class="n.status === 'Activo' ? 'badge-green' : 'badge-red'" class="text-[10px] uppercase font-bold shrink-0">
-              {{ n.status }}
+            <span :class="n.status.value === 'Activo' ? 'badge-green' : 'badge-red'" class="text-[10px] uppercase font-bold shrink-0">
+              {{ n.status.value }}
             </span>
           </div>
         </div>
@@ -195,21 +199,24 @@ const irTarifas       = (nit) => router.push({ name: 'tarifas-negocio', params: 
         <!-- Footer acciones -->
         <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-surface/30">
           <div class="flex gap-1">
-            <button class="btn-icon w-7 h-7" title="Editar negocio" @click="openEdit(n)">
+            <button class="btn-icon w-7 h-7" title="Editar negocio"
+              v-if="auth.can('edit','negocios', n)" @click="openEdit(n)">
               <Pencil :size="12" />
             </button>
             <button class="btn-icon w-7 h-7" title="Gestionar colaboradores"
-                    @click="irColaboradores(n.nit)">
+                v-if="auth.can('manage_staff','negocios', n)"
+                @click="irColaboradores(n.nit)">
               <Users :size="12" />
             </button>
             <button class="btn-icon w-7 h-7"
                     :class="{
-                      'hover:text-danger hover:border-danger/30': n.status === 'Activo',
-                      'hover:text-accent hover:border-accent/30': n.status === 'Inactivo',
+                      'hover:text-danger hover:border-danger/30': n.status.value === 'Activo',
+                      'hover:text-accent hover:border-accent/30': n.status.value === 'Inactivo',
                     }"
-                    :title="n.status === 'Activo' ? 'Desactivar' : 'Activar'"
+                    :title="n.status.value === 'Activo' ? 'Desactivar' : 'Activar'"
+                    v-if="auth.can('edit','negocios', n)"
                     @click="editStatus(n)">
-              <ThumbsUp :size="12" v-if="n.status === 'Inactivo'" />
+              <ThumbsUp :size="12" v-if="n.status.value === 'Inactivo'" />
               <ThumbsDown :size="12" v-else />
             </button>
           </div>
@@ -253,7 +260,7 @@ const irTarifas       = (nit) => router.push({ name: 'tarifas-negocio', params: 
           <label for="franquicia" class="label-dark">FRANQUICIA</label>
           <select id="franquicia" class="input-dark" v-model="form.franquicia">
             <option value="">Selecciona una franquicia</option>
-            <option v-for="f in franquicias" :key="f.uuid" :value="f.uuid">{{ f.nombre }}</option>
+            <option v-for="f in filterFranquicas()" :key="f.uuid" :value="f.uuid">{{ f.nombre }}</option>
           </select>
         </div>
       </div>

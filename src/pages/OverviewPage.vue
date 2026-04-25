@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { Building2, ParkingCircle, MapPin, Users, CalendarCheck, TrendingUp } from 'lucide-vue-next'
+import { Building2, ParkingCircle, MapPin, CalendarCheck } from 'lucide-vue-next'
 import StatCard from '@/components/StatCard.vue'
-import { negociosApi, franquiciasApi, clientesApi, reservasApi } from '@/api/axios'
-import { format, isToday } from 'date-fns'
+import { negociosApi, franquiciasApi } from '@/api/axios'
+import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 const loading = ref(true)
@@ -96,7 +96,7 @@ const today = format(new Date(), "EEEE dd 'de' MMMM", { locale: es })
                 {{ n.puntuacion ? Number(n.puntuacion).toFixed(1) : '—' }} ★
               </td>
               <td class="table-cell">
-                <span :class="n.status === 'Activo' ? 'badge-green' : 'badge-red'">{{ n.status }}</span>
+                <span :class="n.status.value === 'Activo' ? 'badge-green' : 'badge-red'">{{ n.status.value }}</span>
               </td>
             </tr>
           </tbody>
