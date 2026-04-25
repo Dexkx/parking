@@ -12,26 +12,48 @@ class UsuarioSR(serializers.ModelSerializer):
         if attrs["password"] != attrs["confirm_password"]:
             raise serializers.ValidationError("Las contraseñas no coinciden")
         return attrs
-    
+
     def create(self, validated_data):
         validated_data = self._formatear_valores(validated_data)
         return super().create(validated_data)
-        
+
     def update(self, instance, validated_data):
         validated_data = self._formatear_valores(validated_data)
         return super().update(instance, validated_data)
-    
+
     def _formatear_valores(self, validated_data):
         validated_data.pop("confirm_password")
-        
+
         if validated_data.get("password"):
             validated_data['password'] = make_password(validated_data["password"])
-            
+
         if not isinstance(validated_data['tipo_id'], models.TipoIdentificacion):
             validated_data['tipo_id'] = models.TipoIdentificacion.objects.get(pk=validated_data['tipo_id'])
-        
+
         return validated_data
+
+    roles = serializers.SerializerMethodField()
+    def get_roles(self, obj):
+        roles = {
+            'franquicias': [],
+            'negocios': [],
+            'sedes': []
+        }
+
+        # Franquicias
+        for f in obj.franquicias.activos().select_related('franquicia'):
+            roles['franquicias'].append({'id': f.franquicia.pk, 'role': f.tipo_colaborador.pk})
+
+        # Negocios
+        for n in obj.negocios.activos().select_related('negocio'):
+            roles['negocios'].append({'id': n.negocio.pk, 'role': n.tipo_colaborador.pk})
+
+        # Sedes
+        for s in obj.sedes.activos().select_related('sede'):
+            roles['sedes'].append({'id': s.sede.pk, 'role': s.tipo_colaborador.pk})
+
+        return roles
 
     class Meta:
         model = models.Usuarios
-        fields = ("numero_id", "tipo_id", "nombre", "password", "confirm_password")
+        fields = ("numero_id", "tipo_id", "nombre", "password", "confirm_password", "roles")

@@ -70,5 +70,13 @@
             "descripcion": "Estado Reservado",
             "value": "Reservado"
         }
+    },
+    {
+        "model": "core.status",
+        "fields": {
+            "name": "Completado",
+            "descripcion": "Estado Completado",
+            "value": "Completado"
+        }
     }
 ]

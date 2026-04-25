@@ -2,6 +2,11 @@ from rest_framework import serializers
 from ..models import Status
 
 
+class StatusSR(serializers.ModelSerializer):
+    class Meta:
+        model = Status
+        fields = ("name", "value")
+
 class StatusSRMixin:
     status = serializers.PrimaryKeyRelatedField(
         queryset=Status.objects.all(), required=False
@@ -14,6 +19,11 @@ class StatusSRMixin:
         if "status" not in fields:
             fields.append("status")
         return fields
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["status"] = StatusSR(instance.status).data
+        return data
 
 class EmptyStringAsNullMixin:
     """

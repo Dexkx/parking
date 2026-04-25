@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from core.models.core import ModelCore
 from django.db import models
@@ -5,7 +6,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.contrib.auth.hashers import make_password
 from .utils import TipoIdentificacion, TipoVehiculo
 import pgtrigger
-
+from django.apps import apps
 
 class UserManager(BaseUserManager):
     def create_user(self, tipo_id, tipo_usuario=None, password=None, *args, **kwargs):
@@ -70,23 +71,63 @@ class Usuarios(AbstractUser, ModelCore):
     nombre = models.TextField(db_comment="Nombre de la persona")
     password = models.TextField(db_comment="Contraseña del usuario")
 
-    def is_sede(self, uuid):
-        return self.sedes.filter(sede=uuid).activos().exists()
+    def is_franquicia(self, uuid):
+        return self.franquicias.filter(franquicia=uuid).activos().exists()
 
-    def is_dueno_sede(self, uuid):
-        return self.dueno_sedes.filter(uuid=uuid).activos().exists()
+    def get_role_in_franquicia(self, uuid):
+        if self.is_superuser or self.dueno_franquicias.filter(uuid=uuid).activos().exists():
+            return '-1'
 
-    def is_negocio(self, nit):
-        return self.negocios.filter(negocio=nit).activos().exists()
+        if colab := self.franquicias.filter(franquicia=uuid).activos().first():
+            return colab.tipo_colaborador.pk
 
-    def is_dueno_negocio(self, nit):
-        return self.dueno_negocios.filter(nit=nit).activos().exists()
+        return None
 
-    def is_franquicia(self, nit):
-        return self.franquicias.filter(negocio=nit).activos().exists()
+    def get_role_in_negocio(self, nit):
+        if self.is_superuser or self.dueno_negocios.filter(nit=nit).activos().exists():
+            return '-1'
 
-    def is_dueno_franquicia(self, nit):
-        return self.dueno_franquicias.filter(nit=nit).activos().exists()
+        if colab := self.negocios.filter(negocio=nit).activos().first():
+            return colab.tipo_colaborador.pk
+
+        # Check parent franchise
+        from negocios.models import Negocio
+        try:
+            negocio = Negocio.objects.get(pk=nit)
+        except Negocio.DoesNotExist:
+            return None
+
+        if fr := getattr(negocio, 'franquicia'):
+            return self.get_role_in_franquicia(fr.pk)
+
+        return None
+
+    def get_role_in_sede(self, uuid):
+        if self.is_superuser or self.dueno_sedes.filter(uuid=uuid).activos().exists():
+            return '-1'
+
+        if colab := self.sedes.filter(sede=uuid).activos().first():
+            return colab.tipo_colaborador.pk
+
+        from negocios.models import Sede
+        try:
+            sede = Sede.objects.get(pk=uuid)
+        except Sede.DoesNotExist:
+            return None
+
+        return self.get_role_in_negocio(sede.negocio.pk)
+
+    @cached_property
+    def is_dashboard_user(self):
+        return (
+            self.is_superuser
+            or self.sedes.activos().exists()
+            or self.negocios.activos().exists()
+            or self.franquicias.activos().exists()
+            or self.dueno_sedes.activos().exists()
+            or self.dueno_negocios.activos().exists()
+            or self.dueno_franquicias.activos().exists()
+        )
 
     def reset_password(self):
         self.password = make_password(self.numero_id)

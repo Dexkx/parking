@@ -1,7 +1,7 @@
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import AllowAny
 from core.views.mixins import NestedRouterModelMixin, NewCreatedModelMixin
-from clientes.permissions import IsNegocio, IsSede
+from clientes.permissions import IsNegocio, IsSede, JerarquiaPermission
 from .. import models
 from ..serializers import (
     NegocioSR,
@@ -63,7 +63,7 @@ class SedeViewSet(ModelViewSet):
     """
 
     queryset = models.Sede.objects.all()
-    permission_classes = (IsSede,)
+    permission_classes = (IsSede, JerarquiaPermission)
     serializer_class = SedeSR
     filterset_fields = {"negocio": ("exact",)}
 
@@ -82,14 +82,6 @@ class SedeNegocioNestedViewSet(
 
     queryset = models.Sede.objects.all()
     serializer_class = SedeSR
-
-    def get_permissions(self):
-        if self.action in ("list", "retrieve"):
-            self.permission_classes = (AllowAny,)
-        else:
-            self.permission_classes = (Or(IsNegocio, IsSede),)
-        return super().get_permissions()
-
     nested_instances = [
         {
             "lookup": "negocio",
@@ -97,6 +89,48 @@ class SedeNegocioNestedViewSet(
             "model_class": models.Negocio,
         }
     ]
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            self.permission_classes = (AllowAny,)
+        else:
+            self.permission_classes = (Or(IsNegocio, IsSede, JerarquiaPermission),)
+        return super().get_permissions()
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+
+        colab_fr = (
+            user.franquicias
+            .activos()
+            .filter(
+                franquicia= models.models.OuterRef('negocio__franquicia')
+            )
+        )
+
+        colab_n = (
+            user.negocios
+            .activos()
+            .filter(
+                negocio= models.models.OuterRef('negocio')
+            )
+        )
+
+        colab_sd = (
+            user.sedes
+            .activos()
+            .filter(
+                sede= models.models.OuterRef('pk')
+            )
+        )
+
+        return qs.filter(
+            models.models.Q(models.models.Exists(colab_sd)) |
+            models.models.Q(models.models.Exists(colab_n)) |
+            models.models.Q(models.models.Exists(colab_fr))
+        )
+
 
 
 class ColaboradoresSedeViewSet(
@@ -118,7 +152,7 @@ class ColaboradoresSedeViewSet(
         if self.action in ("list", "retrieve"):
             self.permission_classes = (AllowAny,)
         else:
-            self.permission_classes = (IsSede,)
+            self.permission_classes = (Or(IsSede, JerarquiaPermission),)
         return super().get_permissions()
 
     nested_instances = [

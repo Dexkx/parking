@@ -45,6 +45,10 @@ class StatusModelMixin(models.Model):
         return self._get_field_status == 'Reservado'
 
     @cached_property
+    def is_completado(self):
+        return self._get_field_status == 'Completado'
+
+    @cached_property
     def is_disponible(self):
         return self._get_field_status in ('Activo', 'Libre')
 

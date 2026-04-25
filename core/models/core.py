@@ -66,6 +66,10 @@ class Status(_ModelCoreType):
     def RESERVADO(cls):
         return cls.objects.get(pk='Reservado')
 
+    @classproperty
+    def COMPLETADO(cls):
+        return cls.objects.get(pk='Completado')
+
     class Meta:
         db_table = "estados"
 

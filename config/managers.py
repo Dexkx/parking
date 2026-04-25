@@ -30,3 +30,6 @@ class StatusQuerySet(models.QuerySet):
 
     def disponibles(self):
         return self.filter(models.Q(status='Activo') | models.Q(status='Libre'))
+
+    def completados(self):
+        return self.filter(status='Completado')

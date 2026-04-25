@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from .. import models
-from core.serializers import StatusSRMixin, UsuarioSR, TipoVehiculoSR, EmptyStringAsNullMixin
-
+from core.serializers import StatusSRMixin, UsuarioSR, TipoVehiculoSR, EmptyStringAsNullMixin, Status
+from core.models import Status
+from .negocios import NegocioSR
+from .sedes import SedeSR
 
 class PuestoSR(StatusSRMixin, serializers.ModelSerializer):
     sede = serializers.PrimaryKeyRelatedField(
@@ -64,10 +66,10 @@ class ResenaSR(StatusSRMixin, serializers.ModelSerializer):
 class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
     uuid = serializers.UUIDField(read_only=True)
     negocio = serializers.PrimaryKeyRelatedField(
-        queryset=models.Negocio.objects.all(), write_only=True
+        queryset=models.Negocio.objects.all()
     )
     sede = serializers.PrimaryKeyRelatedField(
-        queryset=models.Sede.objects.all(), write_only=True
+        queryset=models.Sede.objects.all()
     )
     piso = serializers.CharField(max_length=20, required=False, allow_null=True) # Si es null se escoje el primer registro encontrado en validate()
     numero = serializers.IntegerField(required=False, allow_null=True) # Si es null se escoje el primer registro encontrado en validate()
@@ -81,8 +83,11 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
         max_digits=10, decimal_places=2, min_value=0.0, read_only=True
     )
 
-    def to_representaion(self, instance):
+    def to_representation(self, instance):
         data = super().to_representation(instance)
+
+        data["negocio"] = NegocioSR(instance.negocio).data
+        data["sede"] = SedeSR(instance.sede).data
 
         data["usuario"] = UsuarioSR(instance.usuario).data
         data["tipo_vehiculo"] = TipoVehiculoSR(instance.tipo_vehiculo).data
@@ -91,7 +96,10 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
         return data
 
     def validate(self, attrs):
-        print(attrs)
+        #  Si ya existe la instancia (es un update), no buscamos puesto ni cambiamos el estado
+        if self.instance:
+            return super().validate(attrs)
+
         puestos_disponibles = (
             models.Puestos.objects.disponibles()
             .filter(
@@ -102,7 +110,6 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
         if not puestos_disponibles.exists():
             raise serializers.ValidationError("No hay puestos disponibles para este tipo de vehículo")
 
-        print("PUESTOS DISPONIBLES: ", puestos_disponibles)
         puesto = puestos_disponibles.first()
         if puesto:
             attrs["piso"] = puesto.piso
@@ -112,7 +119,7 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
         if numero is None:
             attrs["numero"] = puesto.numero
 
-
+        attrs["status"] = Status.RESERVADO
         return super().validate(attrs)
 
     class Meta:

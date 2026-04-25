@@ -20,11 +20,13 @@ def actualizar_disponibilidad_puesto(sender, instance, **kwargs):
     """
     Actualiza la disponibilidad del puesto basado en el estado de la reserva.
     """
-    if instance.is_activo:
+    if instance.is_reservado:
         setattr(instance.puesto, "status", Status.RESERVADO)
-    elif instance.is_cancelado:
+
+    elif instance.is_cancelado or instance.is_completado:
         setattr(instance.puesto, "status", Status.LIBRE)
-    elif instance.is_ocupado:
+
+    elif instance.is_activo:
         setattr(instance.puesto, "status", Status.OCUPADO)
 
     instance.puesto.save(update_fields=["status"])

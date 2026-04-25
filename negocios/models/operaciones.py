@@ -272,5 +272,6 @@ class Reserva(PostgresPartitionedModel, ModelCore):
                         RangeOperators.OVERLAPS,
                     ),
                 ),
+                condition=models.Q(status__in=["Reservado", "Activo"]),
             ),
         )

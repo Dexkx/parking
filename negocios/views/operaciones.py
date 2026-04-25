@@ -5,10 +5,11 @@ from core.views.mixins import (
     NewCreatedModelMixin,
     CompositeFKMixin,
 )
-from clientes.permissions import IsCliente, IsNegocio, IsSede
+from clientes.permissions import IsCliente, IsNegocio, IsSede, IsStaffReserva, JerarquiaPermission
 from .. import models
 from ..serializers import ResenaSR, ReservaSR, PuestoSR, TarifaSR
 from rest_condition import Or
+
 
 class PuestoSedeViewSet(
     NestedRouterModelMixin, CompositeFKMixin, NewCreatedModelMixin, ModelViewSet
@@ -20,7 +21,7 @@ class PuestoSedeViewSet(
 
     queryset = models.Puestos.objects.all()
     serializer_class = PuestoSR
-    permission_classes = (IsSede,)
+    permission_classes = (IsAuthenticated, JerarquiaPermission)
     nested_instances = [
         {"lookup": "sede", "field_name": "sede", "model_class": models.Sede}
     ]
@@ -40,6 +41,7 @@ class PuestoSedeViewSet(
         },
     )
 
+
 class TarifasSedeViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
     """
     Tarifas de una sede.
@@ -47,17 +49,19 @@ class TarifasSedeViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelView
     """
 
     queryset = models.Tarifas.objects.all()
-    permission_classes = (IsSede,)
+    permission_classes = (IsAuthenticated, JerarquiaPermission)
     serializer_class = TarifaSR
     nested_instances = [
         {"lookup": "sede", "field_name": "sede", "model_class": models.Sede}
     ]
+
 
 class TarifasPublicasList(NestedRouterModelMixin, ReadOnlyModelViewSet):
     """
     Tarifas públicas de todas las sedes.
     URL: /sedes-publicas/{uuid}/tarifas/
     """
+
     permission_classes = (AllowAny,)
     serializer_class = TarifaSR
 
@@ -66,21 +70,17 @@ class TarifasPublicasList(NestedRouterModelMixin, ReadOnlyModelViewSet):
     ]
 
     def get_queryset(self):
-        sede_instance = self.get_param_query(instance_model=True).get('sede')
+        sede_instance = self.get_param_query(instance_model=True).get("sede")
         if not sede_instance:
             return models.Tarifas.objects.none()
 
-        tipo_vehiculos_puestos = (
-            sede_instance.puestos
-            .disponibles()
-            .filter(
-                tipo_vehiculo=models.models.OuterRef("tipo_vehiculo")
-            )
+        tipo_vehiculos_puestos = sede_instance.puestos.disponibles().filter(
+            tipo_vehiculo=models.models.OuterRef("tipo_vehiculo")
         )
 
         qs = models.Tarifas.objects.activos().filter(
-            models.models.Q(sede=sede_instance) |
-            models.models.Q(negocio=sede_instance.negocio, sede__isnull=True),
+            models.models.Q(sede=sede_instance)
+            | models.models.Q(negocio=sede_instance.negocio, sede__isnull=True),
             models.models.Exists(tipo_vehiculos_puestos),
         )
 
@@ -96,9 +96,10 @@ class TarifasPublicasList(NestedRouterModelMixin, ReadOnlyModelViewSet):
         # Ordenar y aplicar distinct para quedarse con la más específica por (vehículo, tiempo)
         return (
             qs.annotate(priority=priority_case)
-            .order_by('tipo_vehiculo', 'tiempo', '-priority')
-            .distinct('tipo_vehiculo', 'tiempo')
+            .order_by("tipo_vehiculo", "tiempo", "-priority")
+            .distinct("tipo_vehiculo", "tiempo")
         )
+
 
 class TarifasNegocioViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
     """
@@ -108,7 +109,7 @@ class TarifasNegocioViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelV
 
     queryset = models.Tarifas.objects.all()
     serializer_class = TarifaSR
-    permission_classes = (IsNegocio,)
+    permission_classes = (IsAuthenticated, JerarquiaPermission)
     nested_instances = [
         {"lookup": "negocio", "field_name": "negocio", "model_class": models.Negocio}
     ]
@@ -147,14 +148,14 @@ class ResenaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
         elif self.action == "create":
             self.permission_classes = (IsCliente,)
         else:
-            self.permission_classes = (IsAuthenticated,)
+            self.permission_classes = (IsAuthenticated, JerarquiaPermission)
         return super().get_permissions()
 
 
-class ReservaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
+class ReservaAdminViewSet(ModelViewSet):
     """
     Reservas de un parqueadero.
-    URL: /sedes/{uuid}/reservas/
+    URL: /reservas/
     - Clientes: solo ven sus propias reservas
     - Negocio (dueño/admin): ven todas las reservas de su negocio
     Autenticación requerida para todas las operaciones.
@@ -162,25 +163,52 @@ class ReservaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet)
 
     queryset = models.Reserva.objects.all()
     serializer_class = ReservaSR
+    permission_classes = (IsStaffReserva, JerarquiaPermission)
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = super().get_queryset()
+
+        # Check if user is a collaborator of the franchise the reservation belongs to
+        colab_fr = models.ColaboradresFranquicia.objects.activos().filter(
+            usuario=user, franquicia=models.models.OuterRef("negocio__franquicia")
+        )
+
+        # Check if user is a collaborator of the business the reservation belongs to
+        colab_neg = models.ColaboradoresNegocio.objects.activos().filter(
+            usuario=user, negocio=models.models.OuterRef("negocio")
+        )
+
+        # Check if user is a collaborator of the specific sede (location)
+        colab_sd = models.ColaboradoresSede.objects.activos().filter(
+            usuario=user, sede=models.models.OuterRef("sede")
+        )
+
+        return qs.filter(
+            models.models.Q(models.models.Exists(colab_fr))
+            | models.models.Q(models.models.Exists(colab_neg))
+            | models.models.Q(models.models.Exists(colab_sd))
+        )
+
+    def get_object(self):
+        return super().get_object()
+
+
+
+
+class ReservasViewSet(NestedRouterModelMixin, ModelViewSet):
+    """
+    Reservas de un usuario.
+    URL: /usuarios/{uuid}/reservas/
+    """
+
+    queryset = models.Reserva.objects.all()
+    serializer_class = ReservaSR
     permission_classes = (IsAuthenticated,)
     nested_instances = [
         {
-            "lookup": "sede",
-            "field_name": "sede",
-            "model_class": models.Sede,
+            "lookup": "usuario",
+            "field_name": "usuario",
+            "model_class": models.Usuarios,
         }
     ]
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        user = self.request.user
-
-        # if user.is_negocio:
-        #     return qs
-
-        return qs.filter(usuario=user)
-
-
-    def create(self, request, *args, **kwargs):
-        request.data["usuario"] = request.user.pk
-        return super().create(request, *args, **kwargs)
