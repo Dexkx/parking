@@ -63,4 +63,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return { user, loading, isAuthenticated, userName, userId, loadSession, login, logout }
+}, {
+  persist: {
+    enabled: true,
+    strategies: [
+      {
+        key: 'p-kab-auth',
+        storage: localStorage,
+      },
+    ],
+  },
 })

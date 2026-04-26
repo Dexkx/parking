@@ -18,8 +18,10 @@ api.interceptors.response.use(
   async err => {
     console.log(err.response)
     const original = err.config
-    const code_status = [401, 403]
-    if (code_status.includes(err.response?.status) && !original._retry) {
+    const sessionExpired = err.response.data.code === "token_not_valid"
+    const sessionInvalid = err.response.data.code === "token_not_valid"
+
+    if (sessionExpired && !original._retry) {
       original._retry = true
       const refresh = localStorage.getItem('refresh_token')
       if (refresh) {
@@ -28,11 +30,15 @@ api.interceptors.response.use(
           localStorage.setItem('access_token', data.access)
           original.headers.Authorization = `Bearer ${data.access}`
           return api(original)
-        } catch {
-          localStorage.clear()
-          window.location.href = '/'
+        } catch (error) {
+          console.log(error, error.response)
         }
       }
+    }
+
+    if (sessionInvalid) {
+      localStorage.clear()
+      window.location.href = '/login'
     }
     return Promise.reject(err)
   }
