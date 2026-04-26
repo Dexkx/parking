@@ -5,11 +5,12 @@ import { Plus, Trash2, ArrowLeft, DollarSign, Clock, ThumbsUp, ThumbsDown } from
 import CrudModal from '@/components/CrudModal.vue'
 import { tarifasSedeApi, sedesApi, catalogosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
-import { negociosApi } from '../api/axios'
+import { useAuthStore } from '@/stores/auth'
 
 const route  = useRoute()
 const router = useRouter()
 const toast  = useToast()
+const auth   = useAuthStore()
 
 // const nit    = route.params.nit
 const sedeId = route.params.sede
@@ -30,12 +31,11 @@ const form = ref(emptyForm())
 
 onMounted(async () => {
   const [sedeRes, tarifasRes, tvRes] = await Promise.all([
-    sedesApi.list(),
+    sedesApi.get(sedeId),
     tarifasSedeApi.list(sedeId),
     catalogosApi.tiposVehiculo(),
   ])
-  const sedes = sedeRes.data?.results ?? sedeRes.data ?? []
-  sede.value    = sedes.find(s => s.uuid === sedeId) ?? null
+  sede.value = sedeRes.data?.results ?? sedeRes.data ?? null
   items.value   = tarifasRes.data?.results ?? tarifasRes.data ?? []
   tiposVeh.value = tvRes.data?.results ?? tvRes.data ?? []
   loading.value = false
@@ -121,7 +121,7 @@ const alcance = (t) => {
           Define cuánto cobra la sede por fracción de tiempo. Puedes tener tarifas por toda la sede, por piso o por puesto específico.
         </p>
       </div>
-      <button class="btn-primary" @click="openCreate">
+      <button v-if="auth.can('create_tarifas', 'sedes', sede)" class="btn-primary" @click="openCreate">
         <Plus :size="15" /> Nueva tarifa
       </button>
     </div>
@@ -197,7 +197,7 @@ const alcance = (t) => {
         <!-- Footer acciones -->
         <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-surface/30">
           <div class="flex gap-1">
-            <button class="btn-icon w-7 h-7" :class="{
+            <button v-if="auth.can('edit_tarifas', 'sedes', sede)" class="btn-icon w-7 h-7" :class="{
               'hover:text-danger hover:border-danger/30': t.status.value === 'Activo',
               'hover:text-accent hover:border-accent/30': t.status.value === 'Inactivo',
               }" :title="t.status.value === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(t)">

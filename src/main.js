@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import Toast, { POSITION } from 'vue-toastification'
 import router from '@/router/index.js'
 import { useAuthStore } from '@/stores/auth'
@@ -8,6 +9,7 @@ import './assets/main.css'
 
 const app   = createApp(App)
 const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
 
 app.use(pinia)
 app.use(router)

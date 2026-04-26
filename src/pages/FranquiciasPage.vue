@@ -17,13 +17,13 @@ import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const toast  = useToast()
-const auth   = useAuthStore()
+const toast = useToast()
+const auth = useAuthStore()
 
-const items   = ref([])
+const items = ref([])
 const loading = ref(true)
-const saving  = ref(false)
-const modal   = ref({ open: false, mode: 'create', item: null })
+const saving = ref(false)
+const modal = ref({ open: false, mode: 'create', item: null })
 
 // Count de negocios por franquicia
 const emptyForm = () => ({
@@ -48,7 +48,7 @@ function openCreate() {
   modal.value = { open: true, mode: 'create', item: null }
 }
 function openEdit(item) {
-  form.value  = { ...item, status: item.status.value }
+  form.value = { ...item, status: item.status.value }
   modal.value = { open: true, mode: 'edit', item }
 }
 function closeModal() { modal.value.open = false }
@@ -88,7 +88,7 @@ async function editStatus(item) {
 
 // ── Navegación ──────────────────────────────────────────────
 // "Gestionar negocios" → /negocios?franquicia=uuid (NegociosPage pre-filtrada)
-const irNegocios      = (uuid) => router.push({ name: 'negocios', query: { franquicia: uuid } })
+const irNegocios = (uuid) => router.push({ name: 'negocios', query: { franquicia: uuid } })
 const irColaboradores = (uuid) => router.push({ name: 'colaboradores-franquicia', params: { uuid } })
 </script>
 
@@ -123,12 +123,13 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-franquicia'
     <!-- Grid de tarjetas (espejo de NegociosPage) -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div v-for="item in items" :key="item.uuid"
-           class="card-dark rounded-lg overflow-hidden hover:border-border-hover transition-all animate-fade-up">
+        class="card-dark rounded-lg overflow-hidden hover:border-border-hover transition-all animate-fade-up">
 
         <!-- Top: nombre + badge estado -->
         <div class="flex items-start justify-between p-4 pb-3">
           <div class="flex items-start gap-3 flex-1 min-w-0">
-            <div class="w-9 h-9 rounded-sm bg-purple/10 border border-purple/20 flex items-center justify-center shrink-0">
+            <div
+              class="w-9 h-9 rounded-sm bg-purple/10 border border-purple/20 flex items-center justify-center shrink-0">
               <Building2 :size="16" class="text-purple" />
             </div>
             <div class="min-w-0">
@@ -137,7 +138,8 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-franquicia'
               </div>
               <!-- NIT + Razón social (antes estaban en columnas separadas) -->
               <div class="text-[11px] text-t-muted mt-0.5 truncate">
-                <span v-if="item.nit" class="font-mono">NIT {{ item.nit }}<span v-if="item.numero_verificacion">-{{ item.numero_verificacion }}</span></span>
+                <span v-if="item.nit" class="font-mono">NIT {{ item.nit }}<span v-if="item.numero_verificacion">-{{
+                  item.numero_verificacion }}</span></span>
                 <span v-if="item.nit && item.razon_social" class="mx-1">·</span>
                 <span v-if="item.razon_social">{{ item.razon_social }}</span>
                 <span v-if="!item.nit && !item.razon_social" class="italic">Sin información fiscal</span>
@@ -159,8 +161,7 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-franquicia'
           </div>
           <div class="bg-input px-3 py-2 text-center">
             <div class="text-[10px] text-t-muted uppercase tracking-wider mb-0.5">Estado</div>
-            <div class="text-sm font-semibold"
-                :class="item.status.value === 'Activo' ? 'text-accent' : 'text-danger'">
+            <div class="text-sm font-semibold" :class="item.status.value === 'Activo' ? 'text-accent' : 'text-danger'">
               {{ item.status.value }}
             </div>
           </div>
@@ -169,47 +170,44 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-franquicia'
         <!-- Footer acciones (espejo de NegociosPage) -->
         <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-surface/30">
           <div class="flex gap-1">
-            <button v-if="auth.can('edit', 'franquicias', item)" class="btn-icon w-7 h-7" title="Editar franquicia" @click="openEdit(item)">
+            <button v-if="auth.can('edit', 'franquicias', item)" class="btn-icon w-7 h-7" title="Editar franquicia"
+              @click="openEdit(item)">
               <Pencil :size="12" />
             </button>
-            <button v-if="auth.can('manage_staff', 'franquicias', item)" class="btn-icon w-7 h-7" title="Gestionar colaboradores"
-                    @click="irColaboradores(item.uuid)">
+            <button v-if="auth.can('manage_staff', 'franquicias', item)" class="btn-icon w-7 h-7"
+              title="Gestionar colaboradores" @click="irColaboradores(item.uuid)">
               <Users :size="12" />
             </button>
-            <button v-if="auth.can('edit', 'franquicias', item)" class="btn-icon w-7 h-7"
-                    :class="{
-                      'hover:text-danger hover:border-danger/30': item.status.value === 'Activo',
-                      'hover:text-accent hover:border-accent/30': item.status.value === 'Inactivo',
-                    }"
-                    :title="item.status.value === 'Activo' ? 'Desactivar' : 'Activar'"
-                    @click="editStatus(item)">
+            <button v-if="auth.can('edit', 'franquicias', item)" class="btn-icon w-7 h-7" :class="{
+              'hover:text-danger hover:border-danger/30': item.status.value === 'Activo',
+              'hover:text-accent hover:border-accent/30': item.status.value === 'Inactivo',
+            }" :title="item.status.value === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(item)">
               <ThumbsUp :size="12" v-if="item.status.value === 'Inactivo'" />
               <ThumbsDown :size="12" v-else />
             </button>
           </div>
 
           <!-- ← Botón "Gestionar negocios" prominente (como "Gestionar sedes" en NegociosPage) -->
-          <button v-if="auth.can('view', 'franquicias', item)" class="flex items-center gap-1.5 text-xs text-accent hover:underline font-medium"
-                  @click="irNegocios(item.uuid)">
-            <ParkingCircle :size="12" /> Gestionar negocios <ChevronRight :size="12" />
+          <button v-if="auth.can('view', 'franquicias', item)"
+            class="flex items-center gap-1.5 text-xs text-accent hover:underline font-medium"
+            @click="irNegocios(item.uuid)">
+            <ParkingCircle :size="12" /> Gestionar negocios
+            <ChevronRight :size="12" />
           </button>
         </div>
       </div>
     </div>
 
     <!-- Modal crear/editar franquicia -->
-    <CrudModal :open="modal.open"
-               :title="modal.mode === 'create' ? 'Nueva franquicia' : 'Editar franquicia'"
-               :loading="saving" @close="closeModal" @submit="handleSubmit">
+    <CrudModal :open="modal.open" :title="modal.mode === 'create' ? 'Nueva franquicia' : 'Editar franquicia'"
+      :loading="saving" @close="closeModal" @submit="handleSubmit">
       <div>
         <label class="label-dark">NOMBRE VISIBLE EN LA APP</label>
-        <input class="input-dark" v-model="form.nombre"
-               placeholder="Ej: Parkings del Norte S.A.S" required />
+        <input class="input-dark" v-model="form.nombre" placeholder="Ej: Parkings del Norte S.A.S" required />
       </div>
       <div>
         <label class="label-dark">RAZÓN SOCIAL</label>
-        <input class="input-dark" v-model="form.razon_social"
-               placeholder="Razón social completa" />
+        <input class="input-dark" v-model="form.razon_social" placeholder="Razón social completa" />
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>

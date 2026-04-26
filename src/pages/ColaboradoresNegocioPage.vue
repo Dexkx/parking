@@ -38,12 +38,11 @@ const form = ref(emptyForm())
 
 onMounted(async () => {
   const [negRes, colRes, tiposRes] = await Promise.all([
-    negociosApi.list(),
+    negociosApi.get(nit),
     negociosApi.colaboradores(nit),
     catalogosApi.tiposColaborador(),
   ])
-  const negs    = negRes.data?.results   ?? negRes.data   ?? []
-  negocio.value = negs.find(n => n.nit === nit) ?? null
+  negocio.value = negRes.data?.results ?? negRes.data ?? null
   items.value   = colRes.data?.results   ?? colRes.data   ?? []
   tipos.value   = tiposRes.data?.results ?? tiposRes.data ?? []
   loading.value = false

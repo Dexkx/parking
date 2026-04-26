@@ -30,12 +30,11 @@ const form = ref(emptyForm())
 
 onMounted(async () => {
   const [franRes, colRes, tiposRes] = await Promise.all([
-    franquiciasApi.list(),
+    franquiciasApi.get(uuid),
     franquiciasApi.colaboradores(uuid),
     catalogosApi.tiposColaborador(),
   ])
-  const fran       = franRes.data?.results  ?? franRes.data  ?? []
-  franquicia.value = fran.find(f => f.uuid === uuid) ?? null
+  franquicia.value = franRes.data?.results ?? franRes.data ?? null
   items.value      = colRes.data?.results   ?? colRes.data   ?? []
   tipos.value      = tiposRes.data?.results ?? tiposRes.data ?? []
   loading.value    = false

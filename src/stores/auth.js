@@ -27,8 +27,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const can = (action, entity, item) => {
-    if (!user.value || !user.value.roles) return false
+    if (!user.value || !user.value.roles || !item) return false
     if (user.value.roles.is_superuser) return true
+
 
     let role = getRole(entity, item)
     if (!role) return false
@@ -37,7 +38,12 @@ export const useAuthStore = defineStore('auth', () => {
     // Admin (0)
     if (role === '0') {
       if (action === 'manage_staff') return true
-      if (entity === 'sede' && (action === 'manage_puestos' || action === 'manage_tarifas')) return true
+      if ([
+          'manage_puestos', 'manage_tarifas',
+          'create_puestos', 'create_tarifas',
+          'edit_puestos', 'edit_tarifas',
+        ].includes(action)
+      ) return true
 
       // Cannot manage the entity itself
       if (['edit', 'delete', 'create'].includes(action) && ['franquicia', 'negocio', 'sede'].includes(entity)) return false
@@ -45,8 +51,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Employee (1)
     if (role === '1') {
-      if (['view'].includes(action)) return true
-      return false
+      if (['view', 'manage_puestos', 'manage_tarifas'].includes(action)) return true
+
+      // if (['create_puestos', 'create_tarifas'].includes(action)) return false
     }
 
     // Default: allow viewing global entities
@@ -89,4 +96,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return { user, loading, isAuthenticated, userName, getRole, loadSession, login, logout, can, refreshUser }
+}, {
+  persist: {
+    enabled: true,
+    strategies: [
+      {
+        key: 'p-kab-dashboard-auth',
+        storage: localStorage,
+      },
+    ],
+  },
 })

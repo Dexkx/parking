@@ -5,33 +5,34 @@ import { Plus, Trash2, ArrowLeft, LandPlot, DollarSign, Layers, MapPin, Check, X
 import CrudModal from '@/components/CrudModal.vue'
 import { puestosSedeApi, sedesApi, catalogosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
+import { useAuthStore } from '@/stores/auth'
 
-const route  = useRoute()
+const route = useRoute()
 const router = useRouter()
-const toast  = useToast()
+const toast = useToast()
+const auth = useAuthStore()
 
 // const nit     = route.params.nit
-const sedeId  = route.params.sede
+const sedeId = route.params.sede
 
-const sede         = ref(null)
-const puestos      = ref([])
-const tiposVeh     = ref([])
-const loading      = ref(true)
-const saving       = ref(false)
-const modal        = ref({ open: false })
-const pisoActivo   = ref(null)
+const sede = ref(null)
+const puestos = ref([])
+const tiposVeh = ref([])
+const loading = ref(true)
+const saving = ref(false)
+const modal = ref({ open: false })
+const pisoActivo = ref(null)
 
 const emptyForm = () => ({ sede: sedeId, piso: '', numero: '', tipo_vehiculo: '' })
 const form = ref(emptyForm())
 
 onMounted(async () => {
   const [sedeRes, puestosRes, tvRes] = await Promise.all([
-    sedesApi.list(),
+    sedesApi.get(sedeId),
     puestosSedeApi.list(sedeId),
     catalogosApi.tiposVehiculo(),
   ])
-  const sedes = sedeRes.data?.results ?? sedeRes.data ?? []
-  sede.value    = sedes.find(s => s.uuid === sedeId) ?? null
+  sede.value = sedeRes.data?.results ?? sedeRes.data ?? null
   puestos.value = puestosRes.data?.results ?? puestosRes.data ?? []
   tiposVeh.value = tvRes.data?.results ?? tvRes.data ?? []
   // Activar primer piso
@@ -125,10 +126,10 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { sede: sedeId } 
         </p>
       </div>
       <div class="flex gap-2">
-        <button class="btn-ghost text-sm" @click="irTarifas">
+        <button v-if="auth.can('manage_tarifas', 'sedes', sede)" class="btn-ghost text-sm" @click="irTarifas">
           <DollarSign :size="14" /> Tarifas
         </button>
-        <button class="btn-primary" @click="openCreate">
+        <button v-if="auth.can('create_puestos', 'sedes', sede)" class="btn-primary" @click="openCreate">
           <Plus :size="15" /> Nuevo puesto
         </button>
       </div>
@@ -147,7 +148,7 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { sede: sedeId } 
 
         <button v-for="piso in pisos" :key="piso"
           :class="['flex items-center gap-2 px-3 py-2 rounded-sm text-sm font-medium transition-all text-left',
-                   pisoActivo === piso ? 'bg-accent/10 text-accent border border-accent/30' : 'text-t-secondary hover:text-t-primary hover:bg-white/5 border border-transparent']"
+            pisoActivo === piso ? 'bg-accent/10 text-accent border border-accent/30' : 'text-t-secondary hover:text-t-primary hover:bg-white/5 border border-transparent']"
           @click="pisoActivo = piso">
           <Layers :size="13" /> {{ piso }}
         </button>
@@ -172,24 +173,26 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { sede: sedeId } 
             <div class="flex items-center gap-2">
               <Layers :size="14" class="text-accent" />
               <span class="font-head font-bold text-sm text-t-primary">Piso {{ pisoActivo }}</span>
-              <span class="badge-blue">{{ puestosDelPiso.length }} puesto{{ puestosDelPiso.length === 1 ? '' : 's' }}</span>
+              <span class="badge-blue">{{ puestosDelPiso.length }} puesto{{ puestosDelPiso.length === 1 ? '' : 's'
+                }}</span>
             </div>
           </div>
 
           <!-- Grid de puestos como casillas visuales -->
           <div class="p-4 grid grid-cols-5 md:grid-cols-8 gap-2">
             <div v-for="p in puestosDelPiso" :key="`${p.piso}-${p.numero}-${p.tipo_vehiculo.id}`"
-                 class="group relative bg-input border border-border rounded-sm p-2 text-center hover:border-border-hover transition-all"
-                 :class="{ '!bg-red-500/10': p.status.value === 'Inactivo' }">
+              class="group relative bg-input border border-border rounded-sm p-2 text-center hover:border-border-hover transition-all"
+              :class="{ '!bg-red-500/10': p.status.value === 'Inactivo' }">
               <div class="font-head font-bold text-t-primary text-sm">#{{ p.numero }}</div>
               <div class="text-[10px] text-t-muted mt-0.5 truncate">{{ p.tipo_vehiculo?.name ?? '—' }}</div>
               <span :class="badgeClass(p.status.value)" class="mt-1">
                 {{ p.status.value }}
               </span>
               <!-- Btn desactivar/activar  al hover -->
-              <button class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      @click="editStatus(p)" :class="btnBadgeClass(p.status.value)"
-                      :title="p.status.value === 'Activo' ? 'Desactivar' : 'Activar'">
+              <button v-if="auth.can('edit_puestos', 'sedes', sede)"
+                class="cursor-pointer absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                @click="editStatus(p)" :class="btnBadgeClass(p.status.value)"
+                :title="p.status.value === 'Activo' ? 'Desactivar' : 'Activar'">
 
                 <X v-if="p.status.value === 'Activo'" :size="12" class="text-white" />
                 <Check v-else :size="12" class="text-white" />
@@ -197,8 +200,8 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { sede: sedeId } 
             </div>
 
             <!-- Btn agregar en el piso activo -->
-            <button @click="openCreate"
-                    class="border-2 border-dashed border-border rounded-sm p-2 text-center hover:border-accent/40 hover:text-accent transition-all text-t-muted flex flex-col items-center justify-center gap-1 min-h-[72px]">
+            <button v-if="auth.can('create_puestos', 'sedes', sede)" @click="openCreate"
+              class="border-2 border-dashed border-border rounded-sm p-2 text-center hover:border-accent/40 hover:text-accent transition-all text-t-muted flex flex-col items-center justify-center gap-1 min-h-[72px]">
               <Plus :size="16" />
               <span class="text-[10px]">Agregar</span>
             </button>
@@ -208,8 +211,8 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { sede: sedeId } 
     </div>
 
     <!-- Modal nuevo puesto -->
-    <CrudModal :open="modal.open" title="Nuevo puesto" :loading="saving"
-               submit-label="Crear puesto" @close="closeModal" @submit="handleSubmit">
+    <CrudModal :open="modal.open" title="Nuevo puesto" :loading="saving" submit-label="Crear puesto" @close="closeModal"
+      @submit="handleSubmit">
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="label-dark">PISO</label>
@@ -228,7 +231,8 @@ const irTarifas = () => router.push({ name: 'tarifas', params: { sede: sedeId } 
         </select>
       </div>
       <div class="bg-input/50 rounded-sm p-3 text-xs text-t-muted border border-border">
-        💡 Puedes crear múltiples puestos con el mismo número pero diferente tipo de vehículo (ej: puesto 5 para carro y moto).
+        💡 Puedes crear múltiples puestos con el mismo número pero diferente tipo de vehículo (ej: puesto 5 para carro y
+        moto).
       </div>
     </CrudModal>
 

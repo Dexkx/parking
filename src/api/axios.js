@@ -17,6 +17,7 @@ api.interceptors.response.use(
     console.log(err.response)
     const original = err.config
     const sessionExpired = err.response.data.code === "token_not_valid"
+    const sessionInvalid = err.response.data.code === "token_not_valid"
 
     if (sessionExpired && !original._retry) {
       original._retry = true
@@ -29,10 +30,13 @@ api.interceptors.response.use(
           return api(original)
         } catch (error) {
           console.log(error, error.response)
-          // localStorage.clear()
-          // window.location.href = '/login'
         }
       }
+    }
+
+    if (sessionInvalid) {
+      localStorage.clear()
+      window.location.href = '/login'
     }
     return Promise.reject(err)
   }
@@ -50,6 +54,7 @@ export const authApi = {
 // ── Franquicias ───────────────────────────────────────────────
 export const franquiciasApi = {
   list:                ()           => api.get('/franquicias'),
+  get:                 (uuid)       => api.get(`/franquicias/${uuid}`),
   create:              (d)          => api.post('/franquicias', d),
   update:              (id, d)      => api.patch(`/franquicias/${id}`, d),
   editStatus:          (id, newStatus) => api.patch(`/franquicias/${id}`, { 'status': newStatus }),
@@ -65,6 +70,7 @@ export const franquiciasApi = {
 // ── Negocios ──────────────────────────────────────────────────
 export const negociosApi = {
   list:                (p = {})     => api.get('/negocios', { params: p }),
+  get:                 (nit)        => api.get(`/negocios/${nit}`),
   create:              (d)          => api.post('/negocios', d),
   update:              (nit, d)     => api.patch(`/negocios/${nit}`, d),
   editStatus:          (nit, newStatus) => api.patch(`/negocios/${nit}`, { 'status': newStatus }),
@@ -87,6 +93,7 @@ export const tarifasNegocioApi = {
 // ── Sedes ─────────────────────────────────────────────────────
 export const sedesApi = {
   list:   ()           => api.get(`/sedes`),
+  get:    (id)         => api.get(`/sedes/${id}`),
   create: (d)          => api.post(`/sedes`, d),
   update: (id, d)      => api.patch(`/sedes/${id}`, d),
   editStatus: (id, newStatus) => api.patch(`/sedes/${id}`, { 'status': newStatus }),

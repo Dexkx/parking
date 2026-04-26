@@ -71,7 +71,7 @@ async function editStatus(item) {
 
 async function deleteClient(item) {
   if (!confirm(`¿Eliminar el cliente "${item.usuario?.nombre}"?`)) return
-  
+
   try {
     await clientesApi.delete(nitActivo.value, item.usuario.numero_id)
     toast.success('Cliente eliminado correctamente')
@@ -96,7 +96,7 @@ async function deleteClient(item) {
     <!-- Selector de negocio + buscador -->
     <div class="flex gap-3 mb-5">
       <select class="input-dark w-64" v-model="nitActivo" @change="cargarClientes">
-        <option v-for="n in negocios" :key="n.nit" :value="n.nit">{{ n.nombre }}</option>
+        <option v-for="n in negocios" :key="n.nit" :value="n.nit">{{ n.nombre }} · NIT {{ n.nit }}</option>
       </select>
       <div class="flex items-center gap-2 flex-1 bg-input border border-border rounded-sm px-3 py-2">
         <Search :size="13" class="text-t-muted shrink-0" />

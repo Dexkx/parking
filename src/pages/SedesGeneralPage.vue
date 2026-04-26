@@ -211,6 +211,10 @@ async function editStatus(item) {
 const irPuestos = (sedeUuid) =>
   router.push({ name: 'puestos', params: { sede: sedeUuid } })
 const irColaboradores = (uuid) => router.push({ name: 'colaboradores-sede', params: { uuid } })
+
+function filterNegocios() {
+  return negocios.value.filter(f => auth.can(modal.value.mode, 'negocios', f))
+}
 </script>
 
 <template>
@@ -303,21 +307,21 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-sede', para
 
           <!-- Acciones -->
           <div class="flex items-center gap-1.5 shrink-0">
-            <button v-if="auth.can('edit', 'sede', s)" class="btn-icon w-8 h-8" title="Editar" @click="openEdit(s)">
+            <button v-if="auth.can('edit', 'sedes', s)" class="btn-icon w-8 h-8" title="Editar" @click="openEdit(s)">
               <Pencil :size="13" />
             </button>
-            <button v-if="auth.can('manage_staff', 'sede', s)" class="btn-icon w-7 h-7" title="Gestionar colaboradores"
+            <button v-if="auth.can('manage_staff', 'sedes', s)" class="btn-icon w-7 h-7" title="Gestionar colaboradores"
                     @click="irColaboradores(s.uuid)">
               <Users :size="12" />
             </button>
-            <button v-if="auth.can('edit', 'sede', s)" class="btn-icon w-7 h-7" :class="{
+            <button v-if="auth.can('edit', 'sedes', s)" class="btn-icon w-7 h-7" :class="{
               'hover:text-danger hover:border-danger/30': s.status.value === 'Activo',
               'hover:text-accent hover:border-accent/30': s.status.value === 'Inactivo',
               }" :title="s.status.value === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(s)">
               <ThumbsUp :size="12" v-if="s.status.value === 'Inactivo'" />
               <ThumbsDown :size="12" v-else />
             </button>
-            <button v-if="auth.can('view', 'sede', s)" class="btn-primary text-xs px-3 py-1.5 ml-1" @click="irPuestos(s.uuid)">
+            <button v-if="auth.can('manage_puestos', 'sedes', s)" class="btn-primary text-xs px-3 py-1.5 ml-1" @click="irPuestos(s.uuid)">
               <LandPlot :size="15" />
               Puestos
               <ChevronRight :size="12" />
@@ -402,7 +406,7 @@ const irColaboradores = (uuid) => router.push({ name: 'colaboradores-sede', para
       <div>
         <select class="input-dark" v-model="form.negocio" required>
           <option value="">Selecciona un negocio</option>
-          <option v-for="n in negocios" :key="n.nit" :value="n.nit">
+          <option v-for="n in filterNegocios()" :key="n.nit" :value="n.nit">
             {{ n.nombre }} · NIT {{ n.nit }}
           </option>
         </select>

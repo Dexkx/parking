@@ -16,10 +16,12 @@ import { ArrowLeft, Plus, Pencil, Trash2, Users, ParkingCircle, MapPin } from 'l
 import CrudModal from '@/components/CrudModal.vue'
 import { sedesApi, catalogosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
+import { useAuthStore } from '@/stores/auth'
 
 const route  = useRoute()
 const router = useRouter()
 const toast  = useToast()
+const auth   = useAuthStore()
 
 const uuid    = route.params.uuid
 const sede    = ref(null)
@@ -36,12 +38,11 @@ const form = ref(emptyForm())
 
 onMounted(async () => {
   const [sedRes, colRes, tiposRes] = await Promise.all([
-    sedesApi.list(),
+    sedesApi.get(uuid),
     sedesApi.colaboradores(uuid),
     catalogosApi.tiposColaborador(),
   ])
-  const sedes    = sedRes.data?.results   ?? sedRes.data   ?? []
-  sede.value = sedes.find(n => n.uuid === uuid) ?? null
+  sede.value    = sedRes.data?.results ?? sedRes.data ?? null
   items.value   = colRes.data?.results   ?? colRes.data   ?? []
   tipos.value   = tiposRes.data?.results ?? tiposRes.data ?? []
   loading.value = false
@@ -116,6 +117,38 @@ function labelColaborador(col) {
 
 const inicial = (col) =>
   (col.usuario?.nombre ?? col.usuario?.numero_id ?? '?').charAt(0).toUpperCase()
+
+function tipos_colab_filtering() {
+  const role = auth.getRole('sedes', sede.value)
+
+  let tipos_available = tipos.value.filter(t => t.code !== '-1')
+
+  switch (role) {
+    case '1':
+      tipos_available = []
+      break
+    case '0':
+      tipos_available = tipos_available.filter(t => t.code !== '0')
+      break
+    default:
+      break
+  }
+
+  return tipos_available
+}
+
+function can_action(action, tipo_colab) {
+  const role = auth.getRole('sedes', sede.value)
+  if (role === '-1') return true
+  if (tipo_colab === '-1' || !tipo_colab) return false
+
+  switch (action) {
+    case 'edit':
+      return false
+    case 'delete':
+      return role === '0' && tipo_colab !== '0'
+  }
+}
 </script>
 
 <template>
@@ -199,11 +232,14 @@ const inicial = (col) =>
         <div class="flex items-center justify-end gap-1.5 pr-4 py-3">
           <!-- No editar/eliminar al Dueño (-1) -->
           <template v-if="(col.tipo_colaborador?.code ?? col.tipo_colaborador) !== '-1'">
-            <button class="btn-icon w-7 h-7" title="Cambiar rol" @click="openEdit(col)">
+            <button class="btn-icon w-7 h-7" title="Cambiar rol"
+              v-if="can_action('edit', col.tipo_colaborador?.code)"
+              @click="openEdit(col)">
               <Pencil :size="12" />
             </button>
             <button class="btn-icon w-7 h-7 hover:text-danger hover:border-danger/30"
-                    title="Eliminar" @click="handleDelete(col)">
+              v-if="can_action('delete', col.tipo_colaborador?.code)"
+              title="Eliminar" @click="handleDelete(col)">
               <Trash2 :size="12" />
             </button>
           </template>
@@ -257,7 +293,7 @@ const inicial = (col) =>
         <label class="label-dark">ROL / TIPO DE COLABORADOR</label>
         <select class="input-dark" v-model="form.tipo_colaborador" required>
           <option value="">Selecciona un rol</option>
-          <option v-for="t in tipos.filter(t => t.code !== '-1')"
+          <option v-for="t in tipos_colab_filtering()"
                   :key="t.code" :value="t.code">
             {{ t.descripcion }}
           </option>
