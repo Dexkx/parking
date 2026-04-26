@@ -50,6 +50,7 @@ const emptyForm = () => ({
   creado_por: auth.user?.numero_id ?? '',
   lat: null,
   lng: null,
+  minutos_gracia: null,
 })
 const form = ref(emptyForm())
 const hasCoords = computed(() => {
@@ -151,14 +152,12 @@ function openCreate() {
 }
 async function openEdit(item) {
   form.value = {
+    ...item,
+    status: item.status.value,
     negocio: item.negocio.nit,
-    nombre: item.nombre,
-    direccion: item.direccion,
     country: item.country?.id ?? '',
     state: item.state?.id ?? '',
     city: item.city?.id ?? '',
-    lat: item.lat,
-    lng: item.lng,
   }
 
   await getDeptos()
@@ -311,17 +310,18 @@ function filterNegocios() {
               <Pencil :size="13" />
             </button>
             <button v-if="auth.can('manage_staff', 'sedes', s)" class="btn-icon w-7 h-7" title="Gestionar colaboradores"
-                    @click="irColaboradores(s.uuid)">
+              @click="irColaboradores(s.uuid)">
               <Users :size="12" />
             </button>
             <button v-if="auth.can('edit', 'sedes', s)" class="btn-icon w-7 h-7" :class="{
               'hover:text-danger hover:border-danger/30': s.status.value === 'Activo',
               'hover:text-accent hover:border-accent/30': s.status.value === 'Inactivo',
-              }" :title="s.status.value === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(s)">
+            }" :title="s.status.value === 'Activo' ? 'Desactivar' : 'Activar'" @click="editStatus(s)">
               <ThumbsUp :size="12" v-if="s.status.value === 'Inactivo'" />
               <ThumbsDown :size="12" v-else />
             </button>
-            <button v-if="auth.can('manage_puestos', 'sedes', s)" class="btn-primary text-xs px-3 py-1.5 ml-1" @click="irPuestos(s.uuid)">
+            <button v-if="auth.can('manage_puestos', 'sedes', s)" class="btn-primary text-xs px-3 py-1.5 ml-1"
+              @click="irPuestos(s.uuid)">
               <LandPlot :size="15" />
               Puestos
               <ChevronRight :size="12" />
@@ -337,79 +337,92 @@ function filterNegocios() {
       :submit-label="saving ? 'Guardando...' : askingLocates ? 'Buscando coordenadas...' : 'Guardar sede'" size="lg"
       @close="closeModal" @submit="handleSubmit">
 
-      <div>
-        <label class="label-dark">NOMBRE DE LA SEDE</label>
-        <input class="input-dark" v-model="form.nombre" placeholder="Ej: Sede Norte, Sede Chapinero" required />
-      </div>
-
-      <div class="grid grid-cols-3 gap-3">
+      <div class="overflow-y-auto max-h-[60vh]">
         <div>
-          <label class="label-dark">PAÍS</label>
-          <select class="input-dark" v-model="form.country" @change="onPaisChange" required>
-            <option value="">Selecciona</option>
-            <option v-for="p in paises" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
+          <label class="label-dark">NOMBRE DE LA SEDE</label>
+          <input class="input-dark" v-model="form.nombre" placeholder="Ej: Sede Norte, Sede Chapinero" required />
         </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="label-dark">PAÍS</label>
+            <select class="input-dark" v-model="form.country" @change="onPaisChange" required>
+              <option value="">Selecciona</option>
+              <option v-for="p in paises" :key="p.id" :value="p.id">{{ p.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="label-dark">DEPARTAMENTO</label>
+            <select class="input-dark" v-model="form.state" @change="onDeptoChange" required :disabled="!deptos.length">
+              <option value="">Selecciona</option>
+              <option v-for="d in deptos" :key="d.id" :value="d.id">{{ d.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="label-dark">CIUDAD</label>
+            <select class="input-dark" v-model="form.city" :disabled="!ciudades.length">
+              <option value="">Selecciona</option>
+              <option v-for="c in ciudades" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+        </div>
+
         <div>
-          <label class="label-dark">DEPARTAMENTO</label>
-          <select class="input-dark" v-model="form.state" @change="onDeptoChange" required :disabled="!deptos.length">
-            <option value="">Selecciona</option>
-            <option v-for="d in deptos" :key="d.id" :value="d.id">{{ d.name }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="label-dark">CIUDAD</label>
-          <select class="input-dark" v-model="form.city" :disabled="!ciudades.length">
-            <option value="">Selecciona</option>
-            <option v-for="c in ciudades" :key="c.id" :value="c.id">{{ c.name }}</option>
-          </select>
-        </div>
-      </div>
+          <label class="label-dark">DIRECCIÓN</label>
+          <div class="relative">
+            <input class="input-dark pr-10" v-model="form.direccion" placeholder="Calle 26 # 13-20" required
+              @blur="handleDireccion" @change="handleDireccion" />
+          </div>
+          <div v-if="hasCoords" class="mt-1.5 ml-3 flex items-center gap-1.5 text-xs text-blue">
+            <MapPin :size="15" />
+            <span class="font-mono">{{ form.lat }}, {{ form.lng }}</span>
+            <span class="text-t-secondary">— Aparecerá en el mapa</span>
+            <button class="btn-icon w-8 h-8 ml-auto hover:border-blue hover:text-blue" title="Cambiar ubicación"
+              @click="changeLocate">
+              <RefreshCcwDot :size="12" />
+            </button>
+          </div>
 
-      <div>
-        <label class="label-dark">DIRECCIÓN</label>
-        <div class="relative">
-          <input class="input-dark pr-10" v-model="form.direccion" placeholder="Calle 26 # 13-20" required
-            @blur="handleDireccion" @change="handleDireccion" />
-        </div>
-        <div v-if="hasCoords" class="mt-1.5 ml-3 flex items-center gap-1.5 text-xs text-blue">
-          <MapPin :size="15" />
-          <span class="font-mono">{{ form.lat }}, {{ form.lng }}</span>
-          <span class="text-t-secondary">— Aparecerá en el mapa</span>
-          <button class="btn-icon w-8 h-8 ml-auto hover:border-blue hover:text-blue" title="Cambiar ubicación"
-            @click="changeLocate">
-            <RefreshCcwDot :size="12" />
-          </button>
-        </div>
+          <p v-else-if="askingLocates" class="mt-1 ml-3 text-xs text-t-muted">
+            Buscando coordenadas...
+          </p>
 
-        <p v-else-if="askingLocates" class="mt-1 ml-3 text-xs text-t-muted">
-          Buscando coordenadas...
-        </p>
-
-        <div v-else-if="locates.length > 0 && form.direccion"
-          class="mt-1.5 flex flex-col ml-3 max-h-40 overflow-y-auto gap-3 text-xs text-t-secondary">
-          <div v-for="locate in locates" :key="locate.place_id" class="flex items-center gap-2 border p-2 border-[var(--t-secondary)] rounded-sm hover:cursor-pointer
+          <div v-else-if="locates.length > 0 && form.direccion"
+            class="mt-1.5 flex flex-col ml-3 max-h-40 overflow-y-auto gap-3 text-xs text-t-secondary">
+            <div v-for="locate in locates" :key="locate.place_id" class="flex items-center gap-2 border p-2 border-[var(--t-secondary)] rounded-sm hover:cursor-pointer
               hover:border-blue hover:text-blue" :class="{
                 'border-accent text-accent': selectedLocate === locate.place_id,
                 'opacity-60': selectedLocate && selectedLocate !== locate.place_id
               }" @click="selectLocate(locate)">
-            <MapPin :size="30" />
-            <span class="font-mono">{{ locate.display_name }}</span>
+              <MapPin :size="30" />
+              <span class="font-mono">{{ locate.display_name }}</span>
+            </div>
           </div>
+
+          <p v-else class="mt-1 ml-3 text-xs text-t-muted">
+            Las coordenadas GPS se detectan al salir del campo. Puedes continuar sin ellas.
+          </p>
         </div>
 
-        <p v-else class="mt-1 ml-3 text-xs text-t-muted">
-          Las coordenadas GPS se detectan al salir del campo. Puedes continuar sin ellas.
-        </p>
-      </div>
+        <div>
+          <select class="input-dark" v-model="form.negocio" required>
+            <option value="">Selecciona un negocio</option>
+            <option v-for="n in filterNegocios()" :key="n.nit" :value="n.nit">
+              {{ n.nombre }} · NIT {{ n.nit }}
+            </option>
+          </select>
+        </div>
 
-      <div>
-        <select class="input-dark" v-model="form.negocio" required>
-          <option value="">Selecciona un negocio</option>
-          <option v-for="n in filterNegocios()" :key="n.nit" :value="n.nit">
-            {{ n.nombre }} · NIT {{ n.nit }}
-          </option>
-        </select>
+        <!-- MINUTOS DE GRACIA -->
+        <div v-if="modal.mode === 'edit'">
+          <label class="label-dark">
+            MINUTOS DE GRACIA
+          </label>
+          <p class="text-xs text-t-secondary mb-1">
+            Tiempo en minutos de cortesía antes de cobrar la primera fracción
+          </p>
+          <input class="input-dark" v-model="form.minutos_gracia" type="number" min="0" placeholder="Ej: 5" />
+        </div>
       </div>
     </CrudModal>
 

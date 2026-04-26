@@ -1,13 +1,22 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useStorage } from '@vueuse/core'
 import { authApi } from '@/api/axios'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user    = ref(null)
+  const user = useStorage('p-kab-dashboard-user', null)
+  const access = useStorage('p-kab-dashboard-access', null)
+  const refresh = useStorage('p-kab-dashboard-refresh', null)
   const loading = ref(true)
 
   const isAuthenticated = computed(() => !!user.value)
   const userName = computed(() => user.value?.nombre?.split(' ')[0] ?? user.value?.numero_id ?? '')
+  const getAccessToken = computed(() => access.value)
+  const getRefreshToken = computed(() => refresh.value)
+
+  function setAccessToken(new_token) {
+    access.value = new_token
+  }
 
   function loadSession() {
     const stored = localStorage.getItem('user')
@@ -17,8 +26,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(numero_id, password) {
     const { data } = await authApi.login({ numero_id, password })
-    localStorage.setItem('access_token', data.access)
-    localStorage.setItem('refresh_token', data.refresh)
+    access.value = data.access
+    refresh.value = data.refresh
 
     const payload = JSON.parse(atob(data.access.split('.')[1]))
     await refreshUser(payload.numero_id)
@@ -33,16 +42,16 @@ export const useAuthStore = defineStore('auth', () => {
 
     let role = getRole(entity, item)
     if (!role) return false
-    else if(role === "-1") return true // Owner
+    else if (role === "-1") return true // Owner
 
     // Admin (0)
     if (role === '0') {
       if (action === 'manage_staff') return true
       if ([
-          'manage_puestos', 'manage_tarifas',
-          'create_puestos', 'create_tarifas',
-          'edit_puestos', 'edit_tarifas',
-        ].includes(action)
+        'manage_puestos', 'manage_tarifas',
+        'create_puestos', 'create_tarifas',
+        'edit_puestos', 'edit_tarifas',
+      ].includes(action)
       ) return true
 
       // Cannot manage the entity itself
@@ -86,24 +95,19 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function refreshUser(numero_id) {
     const { data: userData } = await authApi.me(numero_id)
-    localStorage.setItem('user', JSON.stringify(userData))
     user.value = userData
   }
 
   function logout() {
-    localStorage.clear()
     user.value = null
+    access.value = null
+    refresh.value = null
   }
 
-  return { user, loading, isAuthenticated, userName, getRole, loadSession, login, logout, can, refreshUser }
+  return { user, getAccessToken, getRefreshToken, loading, isAuthenticated, userName, setAccessToken, getRole, loadSession, login, logout, can, refreshUser }
 }, {
   persist: {
-    enabled: true,
-    strategies: [
-      {
-        key: 'p-kab-dashboard-auth',
-        storage: localStorage,
-      },
-    ],
+    key: 'p-kab-dashboard-auth',
+    storage: localStorage,
   },
 })

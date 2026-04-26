@@ -1,4 +1,7 @@
 import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
+
 
 const api = axios.create({
   baseURL: '/api',
@@ -6,26 +9,35 @@ const api = axios.create({
 })
 
 api.interceptors.request.use(cfg => {
-  const token = localStorage.getItem('access_token')
+  const auth = useAuthStore()
+  const token = auth.getAccessToken
+
   if (token) cfg.headers.Authorization = `Bearer ${token}`
+
   return cfg
 })
 
 api.interceptors.response.use(
   res => res,
   async err => {
-    console.log(err.response)
+    // Evitar crash si no hay respuesta del servidor
+    if (!err.response) return Promise.reject(err)
+
+    const auth = useAuthStore()
     const original = err.config
-    const sessionExpired = err.response.data.code === "token_not_valid"
+
     const sessionInvalid = err.response.data.code === "token_not_valid"
+    // Si el error es 401 (o token_not_valid), intentamos renovar
+    const sessionExpired = err.response.status === 401 || err.response.data?.code === "token_not_valid"
 
     if (sessionExpired && !original._retry) {
       original._retry = true
-      const refresh = localStorage.getItem('refresh_token')
-      if (refresh) {
+
+      const tokenRefresh = auth.getRefreshToken
+      if (tokenRefresh) {
         try {
-          const { data } = await axios.post('/api/token/refresh', { refresh })
-          localStorage.setItem('access_token', data.access)
+          const { data } = await axios.post('/api/token/refresh', { refresh: tokenRefresh })
+          auth.setAccessToken(data.access)
           original.headers.Authorization = `Bearer ${data.access}`
           return api(original)
         } catch (error) {
@@ -35,8 +47,9 @@ api.interceptors.response.use(
     }
 
     if (sessionInvalid) {
-      localStorage.clear()
-      window.location.href = '/login'
+      const router = useRouter()
+      auth.logout()
+      router.push('/login')
     }
     return Promise.reject(err)
   }
@@ -134,6 +147,7 @@ export const reservasApi = {
   list:    (p = {}) => api.get(`/reservas`, { params: p }),
   create:  (d)      => api.post(`/reservas`, d),
   cancelar:(uuid)   => api.patch(`/reservas/${uuid}`, { 'status': 'Cancelado' }),
+  finalizar:(uuid)   => api.patch(`/reservas/${uuid}`, { 'status': 'Completado' }),
 }
 
 // ── Catálogos ─────────────────────────────────────────────────

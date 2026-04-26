@@ -20,7 +20,9 @@ const loading = ref(true)
 const saving = ref(false)
 const modal = ref({ open: false })
 
-// Duración en horas y minutos → DurationField de Django espera HH:MM:SS
+// Duración en meses, días, horas y minutos
+const durMeses = ref(0)
+const durDias  = ref(0)
 const durHoras = ref(1)
 const durMins = ref(0)
 
@@ -42,16 +44,17 @@ onMounted(async () => {
 
 function openCreate() {
     form.value = emptyForm()
-    durHoras.value = 1; durMins.value = 0
+    durMeses.value = 0; durDias.value = 0; durHoras.value = 1; durMins.value = 0
     modal.value.open = true
 }
 function closeModal() { modal.value.open = false }
 
-// Convertir horas + minutos → HH:MM:SS
+// Convertir meses + días + horas + minutos → [DD] HH:MM:SS
 function buildTiempo() {
-    const h = String(durHoras.value).padStart(2, '0')
-    const m = String(durMins.value).padStart(2, '0')
-    return `${h}:${m}:00`
+    const totalDias = (parseInt(durMeses.value || 0) * 30) + parseInt(durDias.value || 0)
+    const h = String(durHoras.value || 0).padStart(2, '0')
+    const m = String(durMins.value || 0).padStart(2, '0')
+    return totalDias > 0 ? `${totalDias} ${h}:${m}:00` : `${h}:${m}:00`
 }
 
 async function handleSubmit() {
@@ -85,12 +88,28 @@ async function editStatus(item) {
 // Formatear duración legible
 function fmtTiempo(d) {
     if (!d) return '—'
-    const parts = d.split(':')
+    let days = 0
+    let time = d
+    if (d.includes(' ')) {
+        const parts = d.split(' ')
+        days = parseInt(parts[0])
+        time = parts[1]
+    }
+    const parts = time.split(':')
     const h = parseInt(parts[0])
     const m = parseInt(parts[1])
-    if (h && m) return `${h}h ${m}min`
-    if (h) return `${h} hora${h > 1 ? 's' : ''}`
-    return `${m} min`
+
+    const res = []
+    if (days >= 30) {
+        const months = Math.floor(days / 30)
+        res.push(`${months} mes${months > 1 ? 'es' : ''}`)
+        days %= 30
+    }
+    if (days > 0) res.push(`${days} día${days > 1 ? 's' : ''}`)
+    if (h > 0) res.push(`${h}h`)
+    if (m > 0) res.push(`${m}min`)
+
+    return res.join(' ') || '0 min'
 }
 
 const alcance = (t) => {
@@ -213,18 +232,26 @@ const alcance = (t) => {
             <!-- Duración -->
             <div>
                 <label class="label-dark">DURACIÓN (FRACCIÓN DE TIEMPO)</label>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-4 gap-2">
                     <div>
-                        <label class="text-xs text-t-muted mb-1 block">Horas</label>
-                        <input class="input-dark" type="number" min="0" max="23" v-model="durHoras" />
+                        <label class="text-[10px] text-t-muted mb-1 block uppercase">Meses</label>
+                        <input class="input-dark px-2" type="number" min="0" v-model="durMeses" />
                     </div>
                     <div>
-                        <label class="text-xs text-t-muted mb-1 block">Minutos</label>
-                        <input class="input-dark" type="number" min="0" max="59" step="5" v-model="durMins" />
+                        <label class="text-[10px] text-t-muted mb-1 block uppercase">Días</label>
+                        <input class="input-dark px-2" type="number" min="0" max="30" v-model="durDias" />
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-t-muted mb-1 block uppercase">Horas</label>
+                        <input class="input-dark px-2" type="number" min="0" max="23" v-model="durHoras" />
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-t-muted mb-1 block uppercase">Minutos</label>
+                        <input class="input-dark px-2" type="number" min="0" max="59" step="5" v-model="durMins" />
                     </div>
                 </div>
-                <div class="text-xs text-t-muted mt-1">
-                    Fracción configurada: <span class="text-accent font-semibold">{{ buildTiempo() }}</span>
+                <div class="text-xs text-t-muted mt-2 bg-surface/50 p-2 rounded border border-border/50">
+                    Fracción configurada: <span class="text-accent font-bold">{{ buildTiempo() }}</span>
                 </div>
             </div>
 

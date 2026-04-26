@@ -32,7 +32,8 @@ const modal          = ref({ open: false, mode: 'create', item: null })
 
 const emptyForm = () => ({
   nit: '', numero_verificacion: '', razon_social: '', nombre: '',
-  creado_por: auth.user?.numero_id ?? '', franquicia: franqActiva.value ?? ''
+  creado_por: auth.user?.numero_id ?? '', franquicia: franqActiva.value ?? '',
+  minutos_gracia: null
 })
 const form = ref(emptyForm())
 
@@ -262,6 +263,17 @@ function filterFranquicas() {
             <option value="">Selecciona una franquicia</option>
             <option v-for="f in filterFranquicas()" :key="f.uuid" :value="f.uuid">{{ f.nombre }}</option>
           </select>
+        </div>
+
+        <!-- MINUTOS DE GRACIA -->
+        <div v-if="modal.mode === 'edit'" class="col-span-2">
+          <label class="label-dark">
+            MINUTOS DE GRACIA
+          </label>
+          <p class="text-xs text-t-secondary mb-1">
+            Tiempo en minutos de cortesía antes de cobrar la primera fracción
+          </p>
+          <input class="input-dark" v-model="form.minutos_gracia" type="number" min="0" placeholder="Ej: 5" />
         </div>
       </div>
     </CrudModal>
