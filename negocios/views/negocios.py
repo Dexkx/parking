@@ -1,7 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from core.views.mixins import NestedRouterModelMixin, NewCreatedModelMixin
-from clientes.permissions import IsNegocio, JerarquiaPermission
+from clientes.permissions import JerarquiaPermission
 from .. import models
 from ..serializers import (
     NegocioSR,

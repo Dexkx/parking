@@ -1,14 +1,13 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from core.views.mixins import NestedRouterModelMixin, CompositeFKMixin, NewCreatedModelMixin
-from .permissions import IsNegocio, JerarquiaPermission
+from .permissions import JerarquiaPermission
 from . import models
 from negocios.models import Negocio, ColaboradoresNegocio, ColaboradresFranquicia
 from .serializers import ClienteNegocioSR
-from rest_condition import Or
 
 
-class ClienteNegocioViewSet(NestedRouterModelMixin, CompositeFKMixin, NewCreatedModelMixin, ModelViewSet):
+class ClienteNegocioViewSet(CompositeFKMixin, NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
     """
     Gestión de clientes de un negocio.
     URL: /negocios/{nit}/clientes/
@@ -20,7 +19,7 @@ class ClienteNegocioViewSet(NestedRouterModelMixin, CompositeFKMixin, NewCreated
     """
     queryset = models.ClienteNegocio.objects.all()
     serializer_class = ClienteNegocioSR
-    permission_classes = (Or(IsNegocio, JerarquiaPermission),)
+    permission_classes = (IsAuthenticated, JerarquiaPermission,)
     nested_instances = [
         {
             'lookup': 'negocio',
@@ -65,3 +64,7 @@ class ClienteNegocioViewSet(NestedRouterModelMixin, CompositeFKMixin, NewCreated
                 models.models.Q(models.models.Exists(colab_ng))
             )
         )
+
+    def create(self, request, *args, **kwargs):
+
+        return super().create(request, *args, **kwargs)

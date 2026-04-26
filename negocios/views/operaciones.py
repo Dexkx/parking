@@ -1,11 +1,12 @@
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.mixins import UpdateModelMixin
 from core.views.mixins import (
     NestedRouterModelMixin,
     NewCreatedModelMixin,
     CompositeFKMixin,
 )
-from clientes.permissions import IsCliente, IsNegocio, IsSede, IsStaffReserva, JerarquiaPermission
+from clientes.permissions import IsCliente, IsStaffReserva, JerarquiaPermission
 from .. import models
 from ..serializers import ResenaSR, ReservaSR, PuestoSR, TarifaSR
 from rest_condition import Or
@@ -152,7 +153,10 @@ class ResenaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
         return super().get_permissions()
 
 
-class ReservaAdminViewSet(ModelViewSet):
+class ReservaAdminViewSet(
+    UpdateModelMixin,
+    ReadOnlyModelViewSet
+):
     """
     Reservas de un parqueadero.
     URL: /reservas/
@@ -163,31 +167,31 @@ class ReservaAdminViewSet(ModelViewSet):
 
     queryset = models.Reserva.objects.all()
     serializer_class = ReservaSR
-    permission_classes = (IsStaffReserva, JerarquiaPermission)
+    permission_classes = (IsAuthenticated, IsStaffReserva)
 
     def get_queryset(self):
         user = self.request.user
         qs = super().get_queryset()
 
         # Check if user is a collaborator of the franchise the reservation belongs to
-        colab_fr = models.ColaboradresFranquicia.objects.activos().filter(
-            usuario=user, franquicia=models.models.OuterRef("negocio__franquicia")
+        colab_fr = user.franquicias.activos().filter(
+            franquicia=models.models.OuterRef("negocio__franquicia")
         )
 
         # Check if user is a collaborator of the business the reservation belongs to
-        colab_neg = models.ColaboradoresNegocio.objects.activos().filter(
-            usuario=user, negocio=models.models.OuterRef("negocio")
+        colab_neg = user.negocios.activos().filter(
+            negocio=models.models.OuterRef("negocio")
         )
 
         # Check if user is a collaborator of the specific sede (location)
-        colab_sd = models.ColaboradoresSede.objects.activos().filter(
-            usuario=user, sede=models.models.OuterRef("sede")
+        colab_sd = user.sedes.activos().filter(
+            sede=models.models.OuterRef("sede")
         )
 
         return qs.filter(
+            models.models.Q(models.models.Exists(colab_sd)) |
+            models.models.Q(models.models.Exists(colab_neg)) |
             models.models.Q(models.models.Exists(colab_fr))
-            | models.models.Q(models.models.Exists(colab_neg))
-            | models.models.Q(models.models.Exists(colab_sd))
         )
 
     def get_object(self):

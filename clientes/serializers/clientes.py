@@ -14,6 +14,9 @@ class ClienteNegocioSR(StatusSRMixin, serializers.ModelSerializer):
     negocio = serializers.PrimaryKeyRelatedField(
         queryset=Negocio.objects.all()
     )
+    usuario = serializers.PrimaryKeyRelatedField(
+        queryset=Usuarios.objects.all()
+    )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

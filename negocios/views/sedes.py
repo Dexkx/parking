@@ -1,7 +1,7 @@
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import AllowAny
 from core.views.mixins import NestedRouterModelMixin, NewCreatedModelMixin
-from clientes.permissions import IsNegocio, IsSede, JerarquiaPermission
+from clientes.permissions import JerarquiaPermission
 from .. import models
 from ..serializers import (
     NegocioSR,
@@ -63,39 +63,9 @@ class SedeViewSet(ModelViewSet):
     """
 
     queryset = models.Sede.objects.all()
-    permission_classes = (IsSede, JerarquiaPermission)
+    permission_classes = (JerarquiaPermission,)
     serializer_class = SedeSR
     filterset_fields = {"negocio": ("exact",)}
-
-
-class SedeNegocioNestedViewSet(
-    NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet
-):
-    """
-    Sedes de un negocio.
-    URL: /negocios/{nit}/sedes/
-
-    Cada sede es una ubicación física del parqueadero.
-    Un negocio puede tener N sedes distribuidas por la ciudad o el país.
-    Solo el dueño/admin del negocio puede crear y gestionar sedes.
-    """
-
-    queryset = models.Sede.objects.all()
-    serializer_class = SedeSR
-    nested_instances = [
-        {
-            "lookup": "negocio",
-            "field_name": "negocio",
-            "model_class": models.Negocio,
-        }
-    ]
-
-    def get_permissions(self):
-        if self.action in ("list", "retrieve"):
-            self.permission_classes = (AllowAny,)
-        else:
-            self.permission_classes = (Or(IsNegocio, IsSede, JerarquiaPermission),)
-        return super().get_permissions()
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -131,8 +101,6 @@ class SedeNegocioNestedViewSet(
             models.models.Q(models.models.Exists(colab_fr))
         )
 
-
-
 class ColaboradoresSedeViewSet(
     NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet
 ):
@@ -152,7 +120,7 @@ class ColaboradoresSedeViewSet(
         if self.action in ("list", "retrieve"):
             self.permission_classes = (AllowAny,)
         else:
-            self.permission_classes = (Or(IsSede, JerarquiaPermission),)
+            self.permission_classes = (JerarquiaPermission,)
         return super().get_permissions()
 
     nested_instances = [

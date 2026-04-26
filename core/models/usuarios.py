@@ -71,8 +71,14 @@ class Usuarios(AbstractUser, ModelCore):
     nombre = models.TextField(db_comment="Nombre de la persona")
     password = models.TextField(db_comment="Contraseña del usuario")
 
-    def is_franquicia(self, uuid):
-        return self.franquicias.filter(franquicia=uuid).activos().exists()
+    def is_franquicia(self, uuid, **kwargs):
+        return self.franquicias.filter(franquicia=uuid, **kwargs).activos().exists()
+
+    def is_negocio(self, uuid, **kwargs):
+        return self.negocios.filter(negocio=uuid, **kwargs).activos().exists()
+
+    def is_sede(self, uuid, **kwargs):
+        return self.sedes.filter(sede=uuid, **kwargs).activos().exists()
 
     def get_role_in_franquicia(self, uuid):
         if self.is_superuser or self.dueno_franquicias.filter(uuid=uuid).activos().exists():
