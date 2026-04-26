@@ -4,11 +4,11 @@
  * Usa TicketModal y ConfirmModal (Vue puro) en lugar de useSwal.
  */
 import { ref, computed, onMounted } from 'vue'
-import { CalendarClock, Receipt, XCircle, Clock } from 'lucide-vue-next'
+import { CalendarClock, Receipt, XCircle, Clock, Hand, Check } from 'lucide-vue-next'
 import { formatDistanceToNow, isPast, format, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useAuthStore } from '@/stores/auth'
-import { sedesApi, reservasApi } from '@/api/axios'
+import { reservasApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
 import TicketModal from '@/components/TicketModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
@@ -63,20 +63,60 @@ function pedirCancelacion(r) {
   confirmModal.value = { open: true, reserva: r }
 }
 
-async function confirmarCancelacion() {
-  const r = confirmModal.value.reserva
+async function confirmarCancelacion(r) {
   confirmModal.value.open = false
   if (!r) return
 
   try {
-    const rs = await reservasApi.cancelar(r.sede.uuid, r.uuid)
+    const rs = await reservasApi.cancelar(auth.userId, r.uuid)
 
     const rFind = reservas.value.find(rv => rv.uuid === r.uuid)
-    if (rFind) rFind.status.value = rs.data
+    if (rFind) {
+      rFind.status = rs.data.status
+      rFind.valor_total = rs.data.valor_total
+      rFind.tiempo = rs.data.tiempo
+      rFind.hf_final = rs.data.hf_final
+    }
 
     toast.success('Reserva cancelada correctamente')
   } catch {
     toast.error('No se pudo cancelar. Intenta de nuevo.')
+  }
+}
+
+async function ocuparReserva(r) {
+  try {
+    const rs = await reservasApi.ocupar(auth.userId, r.uuid)
+
+    const rFind = reservas.value.find(rv => rv.uuid === r.uuid)
+    if (rFind) {
+      rFind.status = rs.data.status
+      rFind.valor_total = rs.data.valor_total
+      rFind.tiempo = rs.data.tiempo
+      rFind.hf_final = rs.data.hf_final
+    }
+
+    toast.success('Reserva ocupada correctamente')
+  } catch {
+    toast.error('No se pudo ocupar. Intenta de nuevo.')
+  }
+}
+
+async function confirmarFinalizacion(r) {
+  try {
+    const rs = await reservasApi.finalizar(auth.userId, r.uuid)
+
+    const rFind = reservas.value.find(rv => rv.uuid === r.uuid)
+    if (rFind) {
+      rFind.status = rs.data.status
+      rFind.valor_total = rs.data.valor_total
+      rFind.tiempo = rs.data.tiempo
+      rFind.hf_final = rs.data.hf_final
+    }
+
+    toast.success('Reserva finalizada correctamente')
+  } catch {
+    toast.error('No se pudo finalizar. Intenta de nuevo.')
   }
 }
 
@@ -85,14 +125,19 @@ const fmt = (iso) => format(new Date(iso), 'dd MMM · HH:mm', { locale: es })
 const reltime = (iso) => formatDistanceToNow(new Date(iso), { addSuffix: true, locale: es })
 
 function badgeClass(r) {
-  if (r.status.value === 'Cancelado') return 'badge-red'
+  switch (r.status.value) {
+    case 'Cancelado':
+      return 'badge-red'
+    case 'Completado':
+      return 'badge-blue'
+    case 'Ocupado':
+      return 'badge-green'
+    case 'Reservado':
+      return 'badge-purple'
+  }
+
   if (isPast(new Date(r.hf_final))) return 'badge-blue'
   return 'badge-green'
-}
-function badgeLabel(r) {
-  if (r.status.value === 'Cancelado') return 'Cancelada'
-  if (isPast(new Date(r.hf_final))) return 'Completada'
-  return 'Activa'
 }
 </script>
 
@@ -154,8 +199,14 @@ function badgeLabel(r) {
               </p>
               <p class="flex items-center gap-1 text-xs text-t-muted mt-0.5">
                 <Clock :size="10" />
-                {{ isPast(new Date(r.hf_final)) ? 'Terminó' : 'Termina' }}
-                {{ reltime(r.hf_final) }}
+                <span v-if="r.hf_final">
+                  {{ isPast(new Date(r.hf_final)) ? 'Terminó' : 'Termina' }}
+                  {{ reltime(r.hf_final) }}
+                </span>
+                <span v-else>
+                  {{ isPast(new Date(r.hf_inicio)) ? 'Inició' : 'Inicia' }}
+                  {{ reltime(r.hf_inicio) }}
+                </span>
               </p>
             </div>
             <span :class="badgeClass(r)">{{ r.status.value }}</span>
@@ -184,8 +235,16 @@ function badgeLabel(r) {
             <button class="btn-ghost text-xs px-3 py-1.5" @click="abrirTicket(r)">
               <Receipt :size="12" /> Ver ticket
             </button>
-            <button v-if="!isPast(new Date(r.hf_final)) && r.status.value !== 'Cancelado'"
-              class="btn-danger text-xs px-3 py-1.5" @click="pedirCancelacion(r)">
+            <button v-if="r.status.value === 'Reservado'" class="btn-access text-xs px-3 py-1.5"
+              @click="ocuparReserva(r)">
+              <Hand :size="12" /> Ocupar
+            </button>
+            <button v-if="r.status.value === 'Activo'" class="btn-blue text-xs px-3 py-1.5"
+              @click="confirmarFinalizacion(r)">
+              <Check :size="12" /> Finalizar
+            </button>
+            <button v-if="r.status.value === 'Reservado'" class="btn-danger text-xs px-3 py-1.5"
+              @click="pedirCancelacion(r)">
               <XCircle :size="12" /> Cancelar
             </button>
           </div>

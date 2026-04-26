@@ -66,6 +66,14 @@ const tiposDisponibles = computed(() => {
   }))
 })
 
+const nombreVehiculo = computed(() => {
+  if (!form.value.tipo_vehiculo) return ''
+  // Si es un objeto (vía seleccionarVehiculo) o un ID (vía select)
+  const id = form.value.tipo_vehiculo
+  const encontrado = tiposDisponibles.value.find(t => t.id === id)
+  return encontrado ? encontrado.name : id
+})
+
 // Tarifas filtradas por el tipo de vehículo seleccionado
 const tarifasFiltradas = computed(() => {
   if (!form.value.tipo_vehiculo) return []
@@ -74,7 +82,7 @@ const tarifasFiltradas = computed(() => {
   ).sort((a, b) => duracionSeg(a.tiempo) - duracionSeg(b.tiempo))
 })
 
-// Precio total basado en tarifa seleccionada
+// Precio total basado en tarifa seleccionada (No se muestra si no hay tarifa)
 const precioTotal = computed(() => {
   if (!form.value.tarifa) return null
   return Number(form.value.tarifa.valor)
@@ -96,7 +104,6 @@ const horaFinStr = computed(() => {
 
 const canSubmit = computed(() =>
   form.value.tipo_vehiculo &&
-  form.value.tarifa &&
   form.value.placa.trim().length >= 5 &&
   !saving.value
 )
@@ -161,13 +168,13 @@ async function handleSubmit() {
 
     const data = {
       ...form.value,
-      tarifa:       form.value.tarifa.uuid,
+      tarifa:       form.value.tarifa?.uuid ?? null,
       piso:         form.value.tarifa?.piso ?? null,
       numero:       form.value.tarifa?.numero ?? null,
-      tiempo:       form.value.tarifa.tiempo,
+      tiempo:       form.value.tarifa?.tiempo ?? null,
       placa:        form.value.placa.toUpperCase().replace(/\s/g, '').trim(),
       hf_inicio:    inicio.toISOString(),
-      hf_final:     fin.toISOString(),
+      hf_final:     null, // Se calculará al salir
     }
     await reservasApi.crear(auth.user.numero_id, data)
 
@@ -305,38 +312,23 @@ function alcanceTarifa(t) {
             </select>
           </div>
 
-          <!-- Tarifas disponibles -->
-          <div v-if="form.tipo_vehiculo">
-            <label class="text-xs font-medium text-t-muted tracking-wider uppercase block mb-1.5">
-              DURACIÓN Y TARIFA
-            </label>
-            <div class="flex flex-col gap-2">
-              <button v-for="t in tarifasFiltradas" :key="`${t.tipo_vehiculo.id}-${t.tiempo}`"
-                      type="button"
-                      :class="['flex items-center justify-between px-4 py-3 rounded-sm border text-sm transition-all',
-                               form.tarifa?.tiempo === t.tiempo
-                                 ? 'bg-accent/10 border-accent'
-                                 : 'bg-input border-border hover:border-border-hover']"
-                      @click="form.tarifa = t">
-                <div class="flex items-center gap-2.5">
-                  <div :class="['w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
-                                form.tarifa?.tiempo === t.tiempo ? 'border-accent' : 'border-t-muted']">
-                    <div v-if="form.tarifa?.tiempo === t.tiempo"
-                         class="w-2 h-2 rounded-full bg-accent" />
-                  </div>
-                  <Clock :size="13" :class="form.tarifa?.tiempo === t.tiempo ? 'text-accent' : 'text-t-muted'" />
-                  <span :class="form.tarifa?.tiempo === t.tiempo ? 'text-t-primary font-semibold' : 'text-t-secondary'">
-                    {{ fmtDuracion(t.tiempo) }}
-                  </span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-input border border-border text-t-muted">
-                    {{ alcanceTarifa(t) }}
-                  </span>
-                </div>
-                <span :class="['font-head font-bold',
-                               form.tarifa?.tiempo === t.tiempo ? 'text-accent text-base' : 'text-t-primary text-sm']">
+          <!-- Info de Tarifa (Opcional o informativa) -->
+          <div v-if="form.tipo_vehiculo" class="bg-input/50 border border-border rounded-lg p-4">
+            <div class="flex items-center gap-2 text-t-secondary mb-2">
+              <Clock :size="14" class="text-accent" />
+              <span class="text-xs font-bold uppercase tracking-wider">Tarifas disponibles</span>
+            </div>
+            <p class="text-xs text-t-muted mb-3">
+              El cobro se realizará según el tiempo efectivo de uso.
+            </p>
+            <div class="flex flex-col gap-1.5">
+              <div v-for="t in tarifasFiltradas" :key="`${t.tipo_vehiculo.id}-${t.tiempo}`"
+                   class="flex justify-between items-center text-sm py-1 border-b border-border/50 last:border-0">
+                <span class="text-t-secondary">{{ fmtDuracion(t.tiempo) }}</span>
+                <span class="font-head font-bold text-t-primary">
                   ${{ Number(t.valor).toLocaleString('es-CO') }}
                 </span>
-              </button>
+              </div>
             </div>
           </div>
 
@@ -358,7 +350,7 @@ function alcanceTarifa(t) {
           </div>
 
           <!-- Resumen de la reserva -->
-          <div v-if="form.tarifa && form.placa"
+          <div v-if="form.placa"
                class="rounded-lg p-4 border"
                style="background:rgba(0,229,176,0.05);border-color:rgba(0,229,176,0.2)">
             <div class="text-xs font-semibold text-accent tracking-wider uppercase mb-3">
@@ -367,30 +359,27 @@ function alcanceTarifa(t) {
             <div class="grid grid-cols-2 gap-y-2.5 text-sm">
               <div class="text-t-muted">Sede</div>
               <div class="text-t-primary font-medium text-right">{{ sede.nombre }}</div>
-
+ 
               <div class="text-t-muted">Placa</div>
               <div class="text-accent font-head font-bold text-right tracking-widest">
                 {{ form.placa.toUpperCase() }}
               </div>
-
+ 
               <div class="text-t-muted">Vehículo</div>
-              <div class="text-t-primary text-right">{{ form.tipo_vehiculo }}</div>
-
-              <div class="text-t-muted">Duración</div>
-              <div class="text-t-primary text-right">{{ fmtDuracion(form.tarifa.tiempo) }}</div>
-
+              <div class="text-t-primary text-right">{{ nombreVehiculo }}</div>
+ 
               <div class="text-t-muted">Entrada</div>
               <div class="text-t-primary text-right">
                 {{ form.fecha_inicio }} {{ form.hora_inicio }}
               </div>
-
-              <div class="text-t-muted">Salida estimada</div>
-              <div class="text-t-primary text-right font-semibold">{{ horaFinStr }}</div>
-
+ 
+              <div class="text-t-muted">Salida</div>
+              <div class="text-t-primary text-right font-semibold">Calculado al salir</div>
+ 
               <div class="col-span-2 border-t border-border/50 pt-2.5 mt-0.5 flex justify-between items-center">
                 <span class="text-t-muted text-xs uppercase tracking-wider">Total a pagar</span>
                 <span class="font-head font-extrabold text-xl text-accent">
-                  ${{ precioTotal?.toLocaleString('es-CO') }} COP
+                  Pendiente
                 </span>
               </div>
             </div>

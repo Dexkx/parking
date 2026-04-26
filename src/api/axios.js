@@ -1,4 +1,7 @@
 import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
+
 
 const api = axios.create({
   baseURL: '/api',
@@ -7,8 +10,10 @@ const api = axios.create({
 
 // ── Inyectar token en cada request ──
 api.interceptors.request.use(cfg => {
-  const token = localStorage.getItem('access_token')
+  const auth = useAuthStore()
+  const token = auth.getAccessToken
   if (token) cfg.headers.Authorization = `Bearer ${token}`
+
   return cfg
 })
 
@@ -16,30 +21,42 @@ api.interceptors.request.use(cfg => {
 api.interceptors.response.use(
   res => res,
   async err => {
-    console.log(err.response)
+    // Evitar crash si no hay respuesta del servidor
+    if (!err.response) return Promise.reject(err)
+
+    const auth = useAuthStore()
     const original = err.config
-    const sessionExpired = err.response.data.code === "token_not_valid"
+
     const sessionInvalid = err.response.data.code === "token_not_valid"
+    // Si el error es 401 (o token_not_valid), intentamos renovar
+    const sessionExpired = err.response.status === 401 || err.response.data?.code === "token_not_valid"
 
     if (sessionExpired && !original._retry) {
       original._retry = true
-      const refresh = localStorage.getItem('refresh_token')
-      if (refresh) {
+
+      const tokenRefresh = auth.getRefreshToken
+      if (tokenRefresh) {
         try {
-          const { data } = await axios.post('/api/token/refresh', { refresh })
-          localStorage.setItem('access_token', data.access)
-          original.headers.Authorization = `Bearer ${data.access}`
+          const { data } = await axios.post('/api/token/refresh', { refresh: tokenRefresh })
+          auth.setAccessToken(data.access)
+
+          original.headers.Authorization = `Bearer ${auth.getAccessToken}`
           return api(original)
-        } catch (error) {
-          console.log(error, error.response)
+        } catch (refreshErr) {
+          auth.logout()
+          return Promise.reject(refreshErr)
         }
+      } else {
+        auth.logout()
       }
     }
 
     if (sessionInvalid) {
-      localStorage.clear()
-      window.location.href = '/login'
+      const router = useRouter()
+      auth.logout()
+      router.push('/')
     }
+
     return Promise.reject(err)
   }
 )
@@ -83,6 +100,10 @@ export const reservasApi = {
   crear: (id, d)         => api.post(`/usuarios/${id}/reservas`, d),
   /** PATCH /api/sedes/:uuid/reservas/:uuid */
   cancelar: (id, r_uuid)   => api.patch(`/usuarios/${id}/reservas/${r_uuid}`, { status: 'Cancelado' }),
+  /** PATCH /api/sedes/:uuid/reservas/:uuid */
+  ocupar: (id, r_uuid)   => api.patch(`/usuarios/${id}/reservas/${r_uuid}`, { status: 'Activo' }),
+  /** PATCH /api/sedes/:uuid/reservas/:uuid */
+  finalizar: (id, r_uuid)   => api.patch(`/usuarios/${id}/reservas/${r_uuid}`, { status: 'Completado' }),
 }
 
 export const vehiculosApi = {

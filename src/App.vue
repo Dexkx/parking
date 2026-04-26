@@ -5,10 +5,9 @@
  * Responsabilidades:
  *  - Montar el layout principal (Navbar + RouterView)
  *  - Controlar el LoginModal (open/close)
- *  - Cargar la sesión persistida en localStorage al iniciar
  *  - Detectar ?login=1 en la URL para abrir el modal automáticamente
  */
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppNavbar from '@/components/AppNavbar.vue'
@@ -18,9 +17,6 @@ const auth  = useAuthStore()
 const route = useRoute()
 
 const loginOpen = ref(false)
-
-// ── Restaurar sesión al arrancar ─────────
-onMounted(() => auth.loadSession())
 
 // ── Abrir login si la URL tiene ?login=1 ─
 watch(() => route.query.login, (val) => {

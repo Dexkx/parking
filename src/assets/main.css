@@ -42,6 +42,16 @@
   .btn-ghost {
     @apply flex items-center gap-2 px-4 py-2 rounded-sm border border-border text-t-secondary text-sm cursor-pointer bg-transparent transition-all duration-200 hover:border-border-hover hover:text-t-primary;
   }
+  .btn-blue {
+    @apply flex items-center gap-2 px-4 py-2 rounded-sm text-blue text-sm cursor-pointer transition-all duration-200;
+    background: rgba(101, 163, 255, 0.1);
+    border: 1px solid rgba(101, 163, 255, 0.25);
+  }
+  .btn-access {
+    @apply flex items-center gap-2 px-4 py-2 rounded-sm text-[#00e5b0] text-sm cursor-pointer transition-all duration-200;
+    background: rgba(0,229,176,0.12);
+    border: 1px solid rgba(0,229,176,0.25);
+  }
   .btn-danger {
     @apply flex items-center gap-2 px-4 py-2 rounded-sm text-danger text-sm cursor-pointer transition-all duration-200;
     background: rgba(255,77,109,0.1);
@@ -76,6 +86,11 @@
     @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide text-blue;
     background: rgba(79,142,247,0.12);
     border: 1px solid rgba(79,142,247,0.25);
+  }
+  .badge-purple {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide text-purple-600;
+    background: rgba(138, 43, 226, 0.12);
+    border: 1px solid rgba(138, 43, 226, 0.25);
   }
 
   /* ── Skeleton loader ── */
