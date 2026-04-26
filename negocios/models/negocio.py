@@ -22,7 +22,15 @@ class Negocio(ModelCore):
         blank=True,
         default=None,
     )
+    minutos_gracia = models.IntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        validators=(MinValueValidator(0),),
+        db_comment="Minutos de cortesía antes de cobrar la siguiente fracción",
+    )
     creado_por = models.ForeignKey(Usuarios, related_name="dueno_negocios", on_delete=models.PROTECT)
+
 
     class Meta:
         db_table = "negocios"

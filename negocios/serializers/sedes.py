@@ -38,6 +38,7 @@ class SedeSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer)
         max_digits=10, decimal_places=7, required=False, allow_null=True
     )
 
+    minutos_gracia = serializers.IntegerField(required=False, allow_null=True)
     creado_por = serializers.PrimaryKeyRelatedField(
         queryset=Usuarios.objects.all(), write_only=True
     )
@@ -68,6 +69,7 @@ class SedeSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer)
             "lng",
             "puntuacion",
             "puestos_count",
+            "minutos_gracia",
             "creado_por",
         )
 

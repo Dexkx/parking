@@ -63,7 +63,7 @@ class ResenaSR(StatusSRMixin, serializers.ModelSerializer):
         fields = ("uuid", "negocio", "usuario", "texto", "puntuacion")
 
 
-class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
+class ReservaSR(StatusSRMixin, EmptyStringAsNullMixin, serializers.ModelSerializer):
     uuid = serializers.UUIDField(read_only=True)
     negocio = serializers.PrimaryKeyRelatedField(
         queryset=models.Negocio.objects.all()
@@ -75,13 +75,22 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
     numero = serializers.IntegerField(required=False, allow_null=True) # Si es null se escoje el primer registro encontrado en validate()
 
     tarifa = serializers.PrimaryKeyRelatedField(
-        queryset=models.Tarifas.objects.all(), write_only=True
+        queryset=models.Tarifas.objects.all(),
+        write_only=True,
+        required=False,
+        allow_null=True,
     )
 
+    valor_total = serializers.DecimalField(
+        max_digits=10, decimal_places=2, min_value=0.0, read_only=True
+    )
     # Valor actualizado solo en negocios.signals.operaciones antes de guardar en la DB
     valor_pagado = serializers.DecimalField(
         max_digits=10, decimal_places=2, min_value=0.0, read_only=True
     )
+
+    tiempo = serializers.DurationField(required=False, allow_null=True)
+    hf_final = serializers.DateTimeField(required=False, allow_null=True)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -91,7 +100,7 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
 
         data["usuario"] = UsuarioSR(instance.usuario).data
         data["tipo_vehiculo"] = TipoVehiculoSR(instance.tipo_vehiculo).data
-        data["tarifa"] = TarifaSR(instance.tarifa).data
+        data["tarifa"] = TarifaSR(instance.tarifa).data if instance.tarifa else None
 
         return data
 
@@ -137,6 +146,7 @@ class ReservaSR(StatusSRMixin, serializers.ModelSerializer):
             "placa",
             "hf_inicio",
             "hf_final",
+            "valor_total",
             "valor_pagado",
             "valor_transferencia",
             "valor_tarjeta",

@@ -1,6 +1,5 @@
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.mixins import UpdateModelMixin
 from core.views.mixins import (
     NestedRouterModelMixin,
     NewCreatedModelMixin,
@@ -153,10 +152,7 @@ class ResenaViewSet(NestedRouterModelMixin, NewCreatedModelMixin, ModelViewSet):
         return super().get_permissions()
 
 
-class ReservaAdminViewSet(
-    UpdateModelMixin,
-    ReadOnlyModelViewSet
-):
+class ReservaAdminViewSet(ModelViewSet):
     """
     Reservas de un parqueadero.
     URL: /reservas/

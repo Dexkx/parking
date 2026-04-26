@@ -28,6 +28,8 @@ class NegocioSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializ
     def get_sedes_count(self, obj):
         return obj.sedes.activos().count()
 
+    minutos_gracia = serializers.IntegerField(required=False, allow_null=True)
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
 
@@ -41,7 +43,7 @@ class NegocioSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializ
         fields = (
             "nit", "numero_verificacion", "razon_social",
             "nombre", "creado_por", "puntuacion", "sedes_count",
-            "franquicia", "reservas_hoy_count"
+            "franquicia", "reservas_hoy_count", "minutos_gracia"
         )
 
 

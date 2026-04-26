@@ -181,18 +181,33 @@ class Reserva(PostgresPartitionedModel, ModelCore):
     )
     numero = models.IntegerField(validators=(MinValueValidator(1),))
     tipo_vehiculo = models.ForeignKey(TipoVehiculo, on_delete=models.PROTECT)
-    tiempo = models.DurationField(db_comment="Tiempo de la tarifa")
+    tiempo = models.DurationField(
+        db_comment="Tiempo de la tarifa", null=True, blank=True
+    )
 
     usuario = models.ForeignKey(
         Usuarios, related_name="reservas", on_delete=models.PROTECT
     )
     placa = models.CharField(max_length=10, db_comment="Placa del vehiculo")
 
-    tarifa = models.ForeignKey(Tarifas, on_delete=models.PROTECT)
+    tarifa = models.ForeignKey(
+        Tarifas, on_delete=models.PROTECT, null=True, blank=True
+    )
 
     hf_inicio = models.DateTimeField(db_comment="Fecha y hora de inicio de la reserva")
-    hf_final = models.DateTimeField(db_comment="Fecha y hora de fin de la reserva")
+    hf_final = models.DateTimeField(
+        db_comment="Fecha y hora de fin de la reserva", null=True, blank=True
+    )
 
+
+    valor_total = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        default=0,
+        validators=(MinValueValidator(0),),
+        db_comment="Valor total generado por la reserva (según tarifas)",
+    )
     valor_pagado = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -275,3 +290,17 @@ class Reserva(PostgresPartitionedModel, ModelCore):
                 condition=models.Q(status__in=["Reservado", "Activo"]),
             ),
         )
+
+    @cached_property
+    def minutos_gracia(self):
+        """
+        Retorna los minutos de gracia del negocio.
+        Por defecto 5
+        """
+
+        mins_sede = self.sede.minutos_gracia
+        if mins_sede:
+            return mins_sede
+
+        mins_neg = self.negocio.minutos_gracia
+        return mins_neg if mins_neg else 5
