@@ -164,6 +164,7 @@ class ReservaAdminViewSet(ModelViewSet):
     queryset = models.Reserva.objects.all()
     serializer_class = ReservaSR
     permission_classes = (IsAuthenticated, IsStaffReserva)
+    ordering = ('-hf_inicio', '-hf_final')
 
     def get_queryset(self):
         user = self.request.user
@@ -212,3 +213,4 @@ class ReservasViewSet(NestedRouterModelMixin, ModelViewSet):
             "model_class": models.Usuarios,
         }
     ]
+

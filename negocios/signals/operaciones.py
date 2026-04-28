@@ -40,9 +40,7 @@ def calcular_precio_reserva(sender, instance, **kwargs):
     cuando la reserva se marca como completada.
     """
     # Solo calculamos si se marca como completado y aún no tiene hf_fin (para no repetir)
-    if instance.is_completado and not (
-        instance.hf_final or instance.tiempo
-    ):
+    if not instance.is_completado:
         return
 
     ahora = timezone.now()
@@ -80,7 +78,7 @@ def calcular_precio_reserva(sender, instance, **kwargs):
 
     # 4. Cobrar fracción: si sobra tiempo más allá del margen de cortesía,
     # sumamos una unidad de la tarifa más pequeña.
-    minutos_gracia = instance.sede.minutos_gracia
+    minutos_gracia = instance.minutos_gracia
     if tiempo_restante.total_seconds() > (60 * minutos_gracia):
         # La tarifa más pequeña es la última de la lista (ordenada desc)
         total_valor += tarifas.last().valor

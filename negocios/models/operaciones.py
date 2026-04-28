@@ -11,6 +11,7 @@ from .negocio import Negocio
 from .sedes import Sede
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.functional import cached_property
+from .utils import TsTzRange
 
 
 class Puestos(ModelCore):
@@ -190,15 +191,12 @@ class Reserva(PostgresPartitionedModel, ModelCore):
     )
     placa = models.CharField(max_length=10, db_comment="Placa del vehiculo")
 
-    tarifa = models.ForeignKey(
-        Tarifas, on_delete=models.PROTECT, null=True, blank=True
-    )
+    tarifa = models.ForeignKey(Tarifas, on_delete=models.PROTECT, null=True, blank=True)
 
     hf_inicio = models.DateTimeField(db_comment="Fecha y hora de inicio de la reserva")
     hf_final = models.DateTimeField(
         db_comment="Fecha y hora de fin de la reserva", null=True, blank=True
     )
-
 
     valor_total = models.DecimalField(
         max_digits=10,
@@ -282,10 +280,8 @@ class Reserva(PostgresPartitionedModel, ModelCore):
                     ("sede", RangeOperators.EQUAL),
                     ("piso", RangeOperators.EQUAL),
                     ("numero", RangeOperators.EQUAL),
-                    (
-                        Func("hf_inicio", "hf_final", function="tstzrange"),
-                        RangeOperators.OVERLAPS,
-                    ),
+                    ("tipo_vehiculo", RangeOperators.EQUAL),
+                    # (TsTzRange("hf_inicio", "hf_final", "[)"), RangeOperators.OVERLAPS),
                 ),
                 condition=models.Q(status__in=["Reservado", "Activo"]),
             ),
