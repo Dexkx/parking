@@ -59,7 +59,7 @@ const breadcrumb = computed(() => {
         </div>
         <div>
           <div class="font-head font-extrabold text-sm text-t-primary leading-tight">
-            <span class="text-accent">Park</span>App
+            <span class="text-accent">P-</span>KAB
           </div>
           <div class="text-[10px] text-t-muted font-medium">Dashboard</div>
         </div>

@@ -6,10 +6,12 @@ import CrudModal from '@/components/CrudModal.vue'
 import { tarifasNegocioApi, catalogosApi } from '@/api/axios'
 import { useToast } from 'vue-toastification'
 import { negociosApi } from '../api/axios'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const auth = useAuthStore()
 
 const nit = route.params.nit
 
@@ -140,7 +142,7 @@ const alcance = (t) => {
                     Estas tarifas se ommiten si especificas por sede, piso, o puesto.
                 </p>
             </div>
-            <button class="btn-primary" @click="openCreate">
+            <button v-if="auth.can('create_tarifas', 'negocios', negocio)" class="btn-primary" @click="openCreate">
                 <Plus :size="15" /> Nueva tarifa
             </button>
         </div>

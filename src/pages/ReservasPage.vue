@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Search, CalendarCheck, X, Receipt, Plus, Check } from 'lucide-vue-next'
-import { format, isPast } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
+import { isPast } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useSwal } from '@/composables/useSwal'
 import { useToast } from 'vue-toastification'
@@ -73,10 +74,10 @@ const lista = computed(() => {
 
   switch (estado.value) {
     case 'activa':
-      l = l.filter(r => !isPast(new Date(r.hf_final)) && r.status.value !== 'Cancelado')
+      l = l.filter(r => r.hf_final === null && ['Activo', 'Reservado'].includes(r.status.value))
       break
     case 'completada':
-      l = l.filter(r => isPast(new Date(r.hf_final)) && r.status.value !== 'Cancelado')
+      l = l.filter(r => isPast(new Date(r.hf_final)) && r.status.value === 'Completado')
       break
     case 'cancelada':
       l = l.filter(r => r.status.value === 'Cancelado')
@@ -85,13 +86,14 @@ const lista = computed(() => {
   return l
 })
 
-const fmt = (iso) => format(new Date(iso), 'dd MMM · HH:mm', { locale: es })
+const fmt = (iso) => formatInTimeZone(new Date(iso), 'America/Bogota', 'dd MMM · HH:mm', { locale: es })
 
 function badgeClass(r) {
   switch (r.status.value) {
     case 'Cancelado': return 'badge-red'
-    case 'Libre': return 'badge-blue'
-    case 'Activo': return 'badge-green'
+    case 'Reservado': return 'badge-blue'
+    case 'Activo': return 'badge-purple'
+    case 'Completado': return 'badge-green'
     default: return 'badge-gray'
   }
 }
@@ -240,7 +242,7 @@ async function handleSubmit() {
                 {{ fmt(r.hf_inicio) }}
               </td>
               <td class="table-cell">
-                <span class="badge-blue">{{ fmt(r.hf_final) }}</span>
+                <span class="badge-blue">{{ r.hf_final ? fmt(r.hf_final) : '---' }}</span>
               </td>
               <td class="table-cell text-warn font-semibold bg-surface/5">
                 {{ r.piso }} · #{{ r.numero }}

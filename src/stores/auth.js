@@ -18,12 +18,6 @@ export const useAuthStore = defineStore('auth', () => {
     access.value = new_token
   }
 
-  function loadSession() {
-    const stored = localStorage.getItem('user')
-    if (stored) user.value = JSON.parse(stored)
-    loading.value = false
-  }
-
   async function login(numero_id, password) {
     const { data } = await authApi.login({ numero_id, password })
     access.value = data.access
@@ -31,8 +25,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     const payload = JSON.parse(atob(data.access.split('.')[1]))
     await refreshUser(payload.numero_id)
-
-    return user.value
   }
 
   const can = (action, entity, item) => {
@@ -104,7 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
     refresh.value = null
   }
 
-  return { user, getAccessToken, getRefreshToken, loading, isAuthenticated, userName, setAccessToken, getRole, loadSession, login, logout, can, refreshUser }
+  return { user, getAccessToken, getRefreshToken, loading, isAuthenticated, userName, setAccessToken, getRole, login, logout, can, refreshUser }
 }, {
   persist: {
     key: 'p-kab-dashboard-auth',

@@ -25,8 +25,4 @@ app.use(Toast, {
   newestOnTop: true,
 })
 
-// Restaurar sesión antes de montar la app
-const auth = useAuthStore()
-auth.loadSession()
-
 app.mount('#app')
