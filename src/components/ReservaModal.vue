@@ -88,20 +88,6 @@ const precioTotal = computed(() => {
   return Number(form.value.tarifa.valor)
 })
 
-// Hora de fin calculada
-const horaFin = computed(() => {
-  if (!form.value.tarifa || !form.value.fecha_inicio || !form.value.hora_inicio) return null
-  const inicio = new Date(`${form.value.fecha_inicio}T${form.value.hora_inicio}`)
-  const seg    = duracionSeg(form.value.tarifa.tiempo)
-  const fin    = new Date(inicio.getTime() + seg * 1000)
-  return fin
-})
-
-const horaFinStr = computed(() => {
-  if (!horaFin.value) return '—'
-  return horaFin.value.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-})
-
 const canSubmit = computed(() =>
   form.value.tipo_vehiculo &&
   form.value.placa.trim().length >= 5 &&
@@ -164,7 +150,6 @@ async function handleSubmit() {
   saving.value = true
   try {
     const inicio = new Date(`${form.value.fecha_inicio}T${form.value.hora_inicio}`)
-    const fin    = horaFin.value
 
     const data = {
       ...form.value,
@@ -183,7 +168,6 @@ async function handleSubmit() {
       placa:    form.value.placa.toUpperCase(),
       precio:   precioTotal.value,
       inicio,
-      fin,
     })
     emit('close')
   } catch (err) {
@@ -359,23 +343,23 @@ function alcanceTarifa(t) {
             <div class="grid grid-cols-2 gap-y-2.5 text-sm">
               <div class="text-t-muted">Sede</div>
               <div class="text-t-primary font-medium text-right">{{ sede.nombre }}</div>
- 
+
               <div class="text-t-muted">Placa</div>
               <div class="text-accent font-head font-bold text-right tracking-widest">
                 {{ form.placa.toUpperCase() }}
               </div>
- 
+
               <div class="text-t-muted">Vehículo</div>
               <div class="text-t-primary text-right">{{ nombreVehiculo }}</div>
- 
+
               <div class="text-t-muted">Entrada</div>
               <div class="text-t-primary text-right">
                 {{ form.fecha_inicio }} {{ form.hora_inicio }}
               </div>
- 
+
               <div class="text-t-muted">Salida</div>
               <div class="text-t-primary text-right font-semibold">Calculado al salir</div>
- 
+
               <div class="col-span-2 border-t border-border/50 pt-2.5 mt-0.5 flex justify-between items-center">
                 <span class="text-t-muted text-xs uppercase tracking-wider">Total a pagar</span>
                 <span class="font-head font-extrabold text-xl text-accent">

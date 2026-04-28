@@ -8,7 +8,7 @@
       <!-- Logo -->
       <RouterLink to="/" class="flex items-center gap-2 font-head font-extrabold text-xl tracking-tight">
         <MapPin :size="18" class="text-accent" :stroke-width="2.5" />
-        <span><span class="text-accent">Park</span>App</span>
+        <span><span class="text-accent">P-</span>KAB</span>
       </RouterLink>
 
       <!-- Links centrales -->

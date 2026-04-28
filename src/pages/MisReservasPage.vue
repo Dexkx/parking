@@ -63,8 +63,10 @@ function pedirCancelacion(r) {
   confirmModal.value = { open: true, reserva: r }
 }
 
-async function confirmarCancelacion(r) {
+async function confirmarCancelacion() {
   confirmModal.value.open = false
+
+  const r = confirmModal.value.reserva
   if (!r) return
 
   try {
@@ -73,9 +75,6 @@ async function confirmarCancelacion(r) {
     const rFind = reservas.value.find(rv => rv.uuid === r.uuid)
     if (rFind) {
       rFind.status = rs.data.status
-      rFind.valor_total = rs.data.valor_total
-      rFind.tiempo = rs.data.tiempo
-      rFind.hf_final = rs.data.hf_final
     }
 
     toast.success('Reserva cancelada correctamente')
@@ -91,9 +90,6 @@ async function ocuparReserva(r) {
     const rFind = reservas.value.find(rv => rv.uuid === r.uuid)
     if (rFind) {
       rFind.status = rs.data.status
-      rFind.valor_total = rs.data.valor_total
-      rFind.tiempo = rs.data.tiempo
-      rFind.hf_final = rs.data.hf_final
     }
 
     toast.success('Reserva ocupada correctamente')
@@ -235,7 +231,7 @@ function badgeClass(r) {
             <button class="btn-ghost text-xs px-3 py-1.5" @click="abrirTicket(r)">
               <Receipt :size="12" /> Ver ticket
             </button>
-            <button v-if="r.status.value === 'Reservado'" class="btn-access text-xs px-3 py-1.5"
+            <button v-if="r.status.value === 'Reservado' && r.hf_inicio <= new Date().toISOString()" class="btn-access text-xs px-3 py-1.5"
               @click="ocuparReserva(r)">
               <Hand :size="12" /> Ocupar
             </button>
