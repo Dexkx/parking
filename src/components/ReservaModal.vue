@@ -186,10 +186,29 @@ function duracionSeg(t) {
 
 function fmtDuracion(t) {
   if (!t) return '—'
-  const [h, m] = t.split(':').map(Number)
-  if (h && m) return `${h}h ${m}min`
-  if (h)      return `${h} hora${h > 1 ? 's' : ''}`
-  return `${m} min`
+
+  // Regex para: "30 00:00:00", "1 day, 01:02:03", "15:30:00", "00:00:00.123"
+  const match = t.trim().match(/^(?:(\d+)\s+(?:days?,\s*)?)?(\d+):(\d+):(\d+)(?:\.\d+)?$/)
+  if (!match) return t
+
+  const d = parseInt(match[1] || 0)
+  const h = parseInt(match[2] || 0)
+  const m = parseInt(match[3] || 0)
+  const s = parseInt(match[4] || 0)
+  const totalSeg = (d * 86400) + (h * 3600) + (m * 60) + s
+
+  const meses = Math.floor(totalSeg / (86400 * 30))
+  const dias  = Math.floor((totalSeg % (86400 * 30)) / 86400)
+  const horas = Math.floor((totalSeg % 86400) / 3600)
+  const mins  = Math.floor((totalSeg % 3600) / 60)
+
+  const partes = []
+  if (meses) partes.push(`${meses} mes${meses > 1 ? 'es' : ''}`)
+  if (dias)  partes.push(`${dias} día${dias > 1 ? 's' : ''}`)
+  if (horas) partes.push(`${horas} hora${horas > 1 ? 's' : ''}`)
+  if (mins)  partes.push(`${mins} min`)
+
+  return partes.length ? partes.join(' ') : '0 min'
 }
 
 function today() {

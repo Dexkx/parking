@@ -29,8 +29,8 @@ const confirmModal = ref({ open: false, reserva: null })
 
 // ── Computed ──────────────────────────────
 const hoy = computed(() => reservas.value.filter(r => isToday(new Date(r.hf_inicio))))
-const activas = computed(() => reservas.value.filter(r => !isPast(new Date(r.hf_final)) && r.status.value !== 'Cancelado'))
-const historial = computed(() => reservas.value.filter(r => isPast(new Date(r.hf_final)) || r.status.value === 'Cancelado'))
+const activas = computed(() => reservas.value.filter(r => r.hf_final === null && ['Activo', 'Reservado'].includes(r.status.value)))
+const historial = computed(() => reservas.value.filter(r => (r.hf_final && isPast(new Date(r.hf_final))) || r.status.value === 'Cancelado'))
 const lista = computed(() => {
   switch (tab.value) {
     case 'hoy': return hoy.value
