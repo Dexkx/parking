@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/nomination-api',
+  baseURL: import.meta.env.VITE_NOMINATION_API,
   headers: {
     'Content-Type': 'application/json',
   },
