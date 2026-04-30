@@ -6,12 +6,10 @@ from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from django.db import models
 from core.models import ModelCore, Usuarios, VehiculosUsuario, TipoVehiculo
-from clientes.models.clientes import ClienteNegocio
 from .negocio import Negocio
 from .sedes import Sede
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.functional import cached_property
-from .utils import TsTzRange
 
 
 class Puestos(ModelCore):
@@ -156,7 +154,7 @@ class Resena(ModelCore):
     )
 
     cliente = models.ForeignObject(
-        ClienteNegocio,
+        'clientes.ClienteNegocio',
         from_fields=("negocio_id", "usuario_id"),
         to_fields=("negocio_id", "usuario_id"),
         on_delete=models.PROTECT,
@@ -256,7 +254,7 @@ class Reserva(PostgresPartitionedModel, ModelCore):
     )
 
     cliente = models.ForeignObject(
-        ClienteNegocio,
+        'clientes.ClienteNegocio',
         from_fields=("negocio_id", "usuario_id"),
         to_fields=("negocio_id", "usuario_id"),
         on_delete=models.PROTECT,
