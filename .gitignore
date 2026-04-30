@@ -3,7 +3,7 @@ venv/
 __pycache__/
 *.pyc
 
-logs/**
+# logs/**
 staticfiles/**
 
 # Excluir carpeta de archivos
