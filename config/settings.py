@@ -30,7 +30,7 @@ DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() in ('true', '1', 'yes')
 HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS").split(',')
 ALLOWED_HOSTS = list(set(
     host.split(':')[0]
-    for host in HOSTS    
+    for host in HOSTS
 ))
 
 OS_ACTUAL = platform.system()
@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Librerias
     'corsheaders', # habilitar servidores que puedan consultar
     'pgtrigger', # disparadores de postgresql
@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist', # black list de la api rest auth
     'django_filters', # filtros en direccion con api rest
     'csp',
-    
+
     # Apps
     'core',
     'clientes',
@@ -66,6 +66,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -154,8 +155,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 WHITENOISE_KEEP_ONLY_HASHED_FILES = True
 WHITENOISE_USE_FINDERS = True
-WHITENOISE_AUTOREFRESH = DEBUG 
-WHITENOISE_MAX_AGE = 14400 # Cache por 4 horas 
+WHITENOISE_AUTOREFRESH = DEBUG
+WHITENOISE_MAX_AGE = 14400 # Cache por 4 horas
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -194,7 +195,7 @@ REST_FRAMEWORK = {
     ],
     # 'PAGE_SIZE': 1,
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    
+
     # 'DEFAULT_THROTTLE_CLASSES': [
     #     'rest_framework.throttling.AnonRateThrottle',  # Usuarios anónimos
     #     'rest_framework.throttling.UserRateThrottle',  # Usuarios logueados
@@ -217,7 +218,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     # "TOKEN_OBTAIN_SERIALIZER": "config.auth.serializers.CustomObtainPairSerializer",
-    
+
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'USER_ID_FIELD': 'numero_id',
@@ -255,7 +256,7 @@ CSRF_COOKIE_SECURE = not DEBUG  # Seguridad de las cookies
 # CSP_FRAME_ANCESTORS = ["'self'"] + CORS_ALLOWED
 CONTENT_SECURITY_POLICY = {"DIRECTIVES": {"frame-ancestors": ["'self"] + CORS_ALLOWED}}
 
-# LOGS  
+# LOGS
 LOG_DIR = (BASE_DIR / 'logs')
 LOGGING = {
     'version': 1,
@@ -270,7 +271,7 @@ LOGGING = {
             'style': '{',
         },
         'access': {
-            'format': '[{asctime}] {method} {path} {status_code} {remote_addr} {user_agent} {message}', 
+            'format': '[{asctime}] {method} {path} {status_code} {remote_addr} {user_agent} {message}',
             'style': '{',
         },
     },

@@ -1,0 +1,50 @@
+[2026-04-29 21:54:19,778] ERROR django.security.DisallowedHost Invalid HTTP_HOST header: 'localhost:8000'. You may need to add 'localhost' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\asgiref\sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\django\utils\deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )(request)
+    ^^^^^^^^^^
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\asgiref\sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\asgiref\sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\django\middleware\common.py", line 48, in process_request
+    host = request.get_host()
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\django\http\request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'localhost:8000'. You may need to add 'localhost' to ALLOWED_HOSTS.
+[2026-04-29 21:54:22,853] ERROR django.security.DisallowedHost Invalid HTTP_HOST header: 'localhost:8000'. You may need to add 'localhost' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\asgiref\sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\django\utils\deprecation.py", line 132, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )(request)
+    ^^^^^^^^^^
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\asgiref\sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\asgiref\sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\django\middleware\common.py", line 48, in process_request
+    host = request.get_host()
+  File "C:\_proyectos\p-kab\back\venv\Lib\site-packages\django\http\request.py", line 202, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'localhost:8000'. You may need to add 'localhost' to ALLOWED_HOSTS.
