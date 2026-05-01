@@ -3,11 +3,19 @@ from ..models import Status
 from drf_spectacular.utils import extend_schema_field
 
 class StatusSR(serializers.ModelSerializer):
+    """
+    Serializer simple para el modelo Status.
+    Retorna la representación legible (name) y el valor interno (value).
+    """
     class Meta:
         model = Status
         fields = ("name", "value")
 
 class StatusSRMixin:
+    """
+    Mixin para inyectar un campo 'status' en los serializadores.
+    Maneja automáticamente la escritura como PrimaryKey y la lectura con el serializer StatusSR.
+    """
     status = serializers.PrimaryKeyRelatedField(
         queryset=Status.objects.all(), required=False
     )
@@ -44,6 +52,10 @@ class EmptyStringAsNullMixin:
         return super().to_internal_value(data)
 
 class CompositePKMixin:
+    """
+    Mixin para serializadores cuyos modelos utilizan una Primary Key compuesta (CompositePrimaryKey).
+    Genera automáticamente un campo 'id' que es la unión de los componentes de la PK.
+    """
     id = serializers.SerializerMethodField(read_only=True)
 
     @extend_schema_field(serializers.CharField())

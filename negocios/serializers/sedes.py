@@ -76,6 +76,10 @@ class SedeSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer)
 
 
 class ColaboradoresSedeSR(CompositePKMixin, StatusSRMixin, serializers.ModelSerializer):
+    """
+    Serializer para la relación de colaboradores en una sede física.
+    Utiliza CompositePKMixin para manejar el ID compuesto (sede_id + usuario_id).
+    """
     sede = serializers.PrimaryKeyRelatedField(
         queryset=models.Sede.objects.all(), write_only=True
     )

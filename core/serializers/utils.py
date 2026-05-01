@@ -3,6 +3,9 @@ from rest_framework import serializers
 from .mixins import StatusSRMixin
 
 class TipoVehiculoSR(StatusSRMixin, serializers.ModelSerializer):
+    """
+    Serializer para el catálogo de tipos de vehículos.
+    """
 
     class Meta:
         model = models.TipoVehiculo
@@ -10,6 +13,9 @@ class TipoVehiculoSR(StatusSRMixin, serializers.ModelSerializer):
 
 
 class TipoIdentificacionSR(StatusSRMixin, serializers.ModelSerializer):
+    """
+    Serializer para el catálogo de tipos de identificación.
+    """
 
     class Meta:
         model = models.TipoIdentificacion
@@ -17,6 +23,9 @@ class TipoIdentificacionSR(StatusSRMixin, serializers.ModelSerializer):
 
 
 class TipoColaboradorSR(StatusSRMixin, serializers.ModelSerializer):
+    """
+    Serializer para el catálogo de tipos de colaborador.
+    """
 
     class Meta:
         model = models.TipoColaborador

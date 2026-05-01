@@ -5,6 +5,10 @@ from core.models import Usuarios
 
 
 class FranquiciasSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer):
+    """
+    Serializer para el modelo Franquicias (Holding).
+    Incluye un conteo de los negocios asociados.
+    """
     uuid = serializers.UUIDField(read_only=True)
 
     nit = serializers.CharField(max_length=20, required=False, allow_null=True)
@@ -25,6 +29,10 @@ class FranquiciasSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSeri
 
 
 class ColaboradoresFranquiciaSR(CompositePKMixin, StatusSRMixin, serializers.ModelSerializer):
+    """
+    Serializer para la relación de colaboradores en una franquicia.
+    Gestiona la validación para evitar que el dueño sea agregado como colaborador simple.
+    """
     franquicia = serializers.PrimaryKeyRelatedField(
         queryset=models.Franquicias.objects.all(), write_only=True
     )

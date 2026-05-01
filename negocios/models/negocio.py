@@ -10,6 +10,10 @@ from .franquicias import Franquicias
 
 
 class Negocio(ModelCore):
+    """
+    Modelo que representa un Negocio individual.
+    Puede pertenecer a una Franquicia o ser independiente. Contiene la configuración base como NIT y minutos de gracia.
+    """
     nit = models.CharField(max_length=20, primary_key=True)
     numero_verificacion = models.IntegerField(validators=(MinValueValidator(1),))
     razon_social = models.CharField(max_length=225)
@@ -48,6 +52,10 @@ class Negocio(ModelCore):
         return self.creado_por == user
 
 class ColaboradoresNegocio(ModelCore):
+    """
+    Relación M2M entre Usuarios y Negocios con roles específicos.
+    Define los colaboradores que trabajan en un negocio particular.
+    """
     pk = models.CompositePrimaryKey("negocio_id", "usuario_id")
     negocio = models.ForeignKey(
         Negocio, related_name="colaboradores", on_delete=models.DO_NOTHING

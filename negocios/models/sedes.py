@@ -69,6 +69,10 @@ class Sede(ModelCore):
 
 
 class ColaboradoresSede(ModelCore):
+    """
+    Relación M2M entre Usuarios y Sedes con roles específicos.
+    Define los colaboradores que operan en una sede física particular.
+    """
     pk = models.CompositePrimaryKey("sede_id", "usuario_id")
     sede = models.ForeignKey(
         Sede, related_name="colaboradores", on_delete=models.DO_NOTHING

@@ -4,6 +4,10 @@ from django.db import models
 import uuid
 
 class Franquicias(ModelCore):
+    """
+    Modelo que representa una Franquicia (Holding).
+    Agrupa múltiples negocios bajo una misma entidad legal o administrativa.
+    """
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     nit = models.CharField(max_length=20, null=True, blank=True)
@@ -30,6 +34,10 @@ class Franquicias(ModelCore):
         return self.creado_por == user
 
 class ColaboradresFranquicia(ModelCore):
+    """
+    Relación M2M entre Usuarios y Franquicias con roles específicos.
+    Define qué usuarios pueden gestionar una franquicia y con qué nivel de permisos.
+    """
     pk = models.CompositePrimaryKey('franquicia_id', 'usuario_id')
     franquicia = models.ForeignKey(Franquicias, related_name='colaboradores', on_delete=models.DO_NOTHING)
     usuario = models.ForeignKey(Usuarios, related_name='franquicias', on_delete=models.DO_NOTHING)

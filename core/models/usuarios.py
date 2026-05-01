@@ -9,6 +9,10 @@ import pgtrigger
 from django.apps import apps
 
 class UserManager(BaseUserManager):
+    """
+    Gestor personalizado para el modelo de Usuarios.
+    Maneja la creación de usuarios normales y superusuarios utilizando el numero_id como identificador.
+    """
     def create_user(self, tipo_id, tipo_usuario=None, password=None, *args, **kwargs):
         kwargs.update(
             {
@@ -45,6 +49,11 @@ class UserManager(BaseUserManager):
 
 
 class Usuarios(AbstractUser, ModelCore):
+    """
+    Modelo personalizado de Usuario que utiliza numero_id y tipo_id como identificadores únicos.
+    Hereda de AbstractUser para integrarse con el sistema de autenticación de Django.
+    Incluye lógica de roles para Franquicias, Negocios y Sedes.
+    """
     first_name = None
     last_name = None
     username = None
@@ -158,6 +167,10 @@ class Usuarios(AbstractUser, ModelCore):
 
 
 class VehiculosUsuario(ModelCore):
+    """
+    Modelo que representa los vehículos asociados a un usuario.
+    Utiliza una PK compuesta por el usuario y la placa.
+    """
     pk = models.CompositePrimaryKey("usuario_id", "placa")
     usuario = models.ForeignKey(
         Usuarios, related_name="vehiculos", on_delete=models.DO_NOTHING

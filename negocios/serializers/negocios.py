@@ -6,6 +6,10 @@ from .franquicias import FranquiciasSR
 from django.utils import timezone
 
 class NegocioSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer):
+    """
+    Serializer para el modelo Negocio.
+    Incluye campos calculados como el conteo de sedes y reservas del día.
+    """
     creado_por = serializers.PrimaryKeyRelatedField(
         queryset=Usuarios.objects.all(), write_only=True
     )
@@ -48,6 +52,10 @@ class NegocioSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializ
 
 
 class ColaboradoresNegocioSR(CompositePKMixin, StatusSRMixin, serializers.ModelSerializer):
+    """
+    Serializer para la relación de colaboradores en un negocio.
+    Utiliza CompositePKMixin para manejar el ID compuesto (negocio_id + usuario_id).
+    """
     negocio = serializers.PrimaryKeyRelatedField(
         queryset=models.Negocio.objects.all(), write_only=True
     )
