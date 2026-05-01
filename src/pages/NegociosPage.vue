@@ -53,8 +53,8 @@ onMounted(async () => {
     negociosApi.list(),
     franquiciasApi.list(),
   ])
-  items.value      = negRes.data?.results   ?? negRes.data   ?? []
-  franquicias.value = franqRes.data?.results ?? franqRes.data ?? []
+  items.value      = negRes?.data?.results   ?? negRes?.data   ?? []
+  franquicias.value = franqRes?.data?.results ?? franqRes?.data ?? []
   loading.value = false
 })
 
