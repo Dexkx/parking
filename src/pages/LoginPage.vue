@@ -47,7 +47,7 @@ async function handleLogin() {
           <ParkingCircle :size="28" class="text-accent" :stroke-width="2" />
         </div>
         <h1 class="font-head font-extrabold text-2xl text-t-primary tracking-tight">
-          <span class="text-accent">Park</span>App Dashboard
+          <span class="text-accent">P-</span>Kab Dashboard
         </h1>
         <p class="text-t-secondary text-sm mt-1">Panel de administración</p>
       </div>
