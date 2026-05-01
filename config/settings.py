@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist', # black list de la api rest auth
     'django_filters', # filtros en direccion con api rest
     'csp',
+    'drf_spectacular', # documentacion api
 
     # Apps
     'core',
@@ -193,6 +194,7 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     # 'PAGE_SIZE': 1,
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 
@@ -211,6 +213,11 @@ REST_FRAMEWORK = {
     #     'burst': '100/minute',  # Ráfaga
     #     'safe': '10/minute', # Endpoints sensibles
     # },
+}
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'P-Kab API',
+    'DESCRIPTION': 'Documentación del API de P-Kab',
+    'VERSION': '1.0.0',
 }
 
 from datetime import timedelta
