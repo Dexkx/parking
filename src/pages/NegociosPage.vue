@@ -39,11 +39,14 @@ const form = ref(emptyForm())
 
 // ── Filtrado por franquicia ─────────────────────────────────
 const negociosFiltrados = computed(() => {
-  router.push(franqActiva.value ? { query: { franquicia: franqActiva.value } } : {})
-
   if (!franqActiva.value) return items.value
 
   return items.value.filter(n => n.franquicia?.uuid === franqActiva.value)
+})
+
+// Sincronizar URL con filtro
+watch(franqActiva, (newVal) => {
+  router.push(newVal ? { query: { franquicia: newVal } } : { query: {} })
 })
 
 // ── Carga inicial ───────────────────────────────────────────

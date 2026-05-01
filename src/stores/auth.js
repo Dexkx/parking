@@ -64,7 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const getRole = (entity, item) => {
-    if (!user.value || !user.value.roles) return null
+    if (!user.value || !user.value.roles || !item) return null
 
     const id = item.uuid ?? item.nit ?? null;
     if (id == null) return null;
