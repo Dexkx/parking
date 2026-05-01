@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from ..models import Status
-
+from drf_spectacular.utils import extend_schema_field
 
 class StatusSR(serializers.ModelSerializer):
     class Meta:
@@ -42,3 +42,27 @@ class EmptyStringAsNullMixin:
                 data[field_name] = None
 
         return super().to_internal_value(data)
+
+class CompositePKMixin:
+    id = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field(serializers.CharField())
+    def get_id(self, obj):
+        """
+        Retorna el ID compuesto como un string unido por guiones.
+        Si la PK es una tupla (Composite PK), une sus elementos.
+        """
+        pk = obj.pk
+        if isinstance(pk, (list, tuple)):
+            return "-".join(str(v) for v in pk if v is not None)
+        return str(pk)
+
+    def get_field_names(self, declared_fields, info):
+        """
+        Asegura que 'id' esté presente en los campos del serializador de forma automática.
+        """
+        fields = super().get_field_names(declared_fields, info)
+        fields = list(fields)
+        if "pk" not in fields:
+            fields.insert(0, "pk")
+        return fields

@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from .. import models
-from core.serializers import StatusSRMixin, UsuarioSR, TipoVehiculoSR, EmptyStringAsNullMixin, Status
+from core.serializers import StatusSRMixin, UsuarioSR, TipoVehiculoSR, EmptyStringAsNullMixin, Status, CompositePKMixin
 from core.models import Status
 from .negocios import NegocioSR
 from .sedes import SedeSR
 
-class PuestoSR(StatusSRMixin, serializers.ModelSerializer):
+class PuestoSR(CompositePKMixin, StatusSRMixin, serializers.ModelSerializer):
     sede = serializers.PrimaryKeyRelatedField(
         queryset=models.Sede.objects.all(), write_only=True
     )

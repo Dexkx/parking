@@ -1,12 +1,12 @@
 from rest_framework import serializers
-from core.serializers import StatusSRMixin, UsuarioSR
+from core.serializers import StatusSRMixin, UsuarioSR, CompositePKMixin
 from core.models import Usuarios
 from .. import models
 from negocios.models import Negocio
 from negocios.serializers import NegocioSR
 
 
-class ClienteNegocioSR(StatusSRMixin, serializers.ModelSerializer):
+class ClienteNegocioSR(CompositePKMixin, StatusSRMixin, serializers.ModelSerializer):
     """
     Serializer para la relación cliente-negocio.
     Maneja clientes registrados con membresía mensual.

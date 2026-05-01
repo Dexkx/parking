@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .. import models
-from core.serializers import StatusSRMixin, UsuarioSR, TipoColaboradorSR, EmptyStringAsNullMixin
+from core.serializers import StatusSRMixin, UsuarioSR, TipoColaboradorSR, EmptyStringAsNullMixin, CompositePKMixin
 from core.models import Usuarios
 
 
@@ -16,7 +16,7 @@ class FranquiciasSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSeri
     )
 
     negocios_count = serializers.SerializerMethodField(read_only=True)
-    def get_negocios_count(self, obj):
+    def get_negocios_count(self, obj) -> int:
         return obj.negocios.count()
 
     class Meta:
@@ -24,7 +24,7 @@ class FranquiciasSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSeri
         fields = ('uuid', 'nit', 'numero_verificacion', 'razon_social', 'nombre', 'creado_por', 'status', 'negocios_count')
 
 
-class ColaboradoresFranquiciaSR(StatusSRMixin, serializers.ModelSerializer):
+class ColaboradoresFranquiciaSR(CompositePKMixin, StatusSRMixin, serializers.ModelSerializer):
     franquicia = serializers.PrimaryKeyRelatedField(
         queryset=models.Franquicias.objects.all(), write_only=True
     )

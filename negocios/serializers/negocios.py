@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .. import models
 from core.models import Usuarios
-from core.serializers import StatusSRMixin, TipoColaboradorSR, UsuarioSR, TipoVehiculoSR, CitySR, EmptyStringAsNullMixin
+from core.serializers import StatusSRMixin, TipoColaboradorSR, UsuarioSR, TipoVehiculoSR, CitySR, EmptyStringAsNullMixin, CompositePKMixin
 from .franquicias import FranquiciasSR
 from django.utils import timezone
 
@@ -21,11 +21,11 @@ class NegocioSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializ
     )
 
     reservas_hoy_count = serializers.SerializerMethodField(read_only=True)
-    def get_reservas_hoy_count(self, obj):
+    def get_reservas_hoy_count(self, obj) -> int:
         return obj.reservas.filter(hf_inicio__date=timezone.now().date()).count()
 
     sedes_count = serializers.SerializerMethodField(read_only=True)
-    def get_sedes_count(self, obj):
+    def get_sedes_count(self, obj) -> int:
         return obj.sedes.activos().count()
 
     minutos_gracia = serializers.IntegerField(required=False, allow_null=True)
@@ -47,7 +47,7 @@ class NegocioSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializ
         )
 
 
-class ColaboradoresNegocioSR(StatusSRMixin, serializers.ModelSerializer):
+class ColaboradoresNegocioSR(CompositePKMixin, StatusSRMixin, serializers.ModelSerializer):
     negocio = serializers.PrimaryKeyRelatedField(
         queryset=models.Negocio.objects.all(), write_only=True
     )

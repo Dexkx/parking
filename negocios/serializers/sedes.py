@@ -8,6 +8,7 @@ from core.serializers import (
     StatusSRMixin,
     TipoColaboradorSR,
     UsuarioSR,
+    CompositePKMixin,
     TipoVehiculoSR,
     EmptyStringAsNullMixin,
 )
@@ -74,7 +75,7 @@ class SedeSR(EmptyStringAsNullMixin, StatusSRMixin, serializers.ModelSerializer)
         )
 
 
-class ColaboradoresSedeSR(StatusSRMixin, serializers.ModelSerializer):
+class ColaboradoresSedeSR(CompositePKMixin, StatusSRMixin, serializers.ModelSerializer):
     sede = serializers.PrimaryKeyRelatedField(
         queryset=models.Sede.objects.all(), write_only=True
     )
