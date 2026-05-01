@@ -55,7 +55,6 @@ function closeModal() { modal.value.open = false }
 
 async function handleSubmit() {
   saving.value = true
-  console.log(form.value)
   try {
     if (modal.value.mode === 'create') {
       await franquiciasApi.create(form.value)
