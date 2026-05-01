@@ -16,6 +16,7 @@ staticfiles/**
 **/migrations/**
 # Evitar ignorar el archivo __init__.py en las carpetas de migraciones
 !**/migrations/__init__.py
+!**/migrations/*_initial.py
 
 vscode/
 .vscode/
